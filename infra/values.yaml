@@ -1,0 +1,29 @@
+# infra/values.yaml -- environment deployment overlay (sample seed).
+# Composed over the pinned dfe-infra base via the helm values cascade
+# (base defaults -> cloud -> profile -> THIS overlay wins last).
+
+# Profile + cloud select the base defaults to layer on.
+profile: standard          # standard | scale
+cloud: local               # local | aws | gcp | azure
+
+# Which dfe-* apps deploy. Core (dfe-engine, hyperdx, pg+ferretdb, clickhouse,
+# kafka-if-not-grpc, dfe-loader) are always on regardless. These toggle the rest.
+apps:
+  dfe-receiver: { enabled: true }    # default-on (~95% of deployments)
+  dfe-archiver: { enabled: true }    # default-on (recommended)
+  dfe-fetcher: { enabled: false }    # as-needed
+  dfe-transform-vrl: { enabled: false }
+  dfe-transform-vector: { enabled: false }
+  dfe-transform-wasm: { enabled: false }
+  dfe-transform-elastic: { enabled: false }
+  dfe-transform-splack: { enabled: false }
+
+# Substrate modes (see dfe-docs substrate-modes). Defaults follow the profile.
+clickhouse:
+  mode: single             # single | cluster | external
+kafka:
+  mode: disabled           # disabled | single | cluster | external (gRPC transport -> disabled)
+
+# Scoped-RW: per-app scaling/resources. Human-authored at GA; engine-authored at
+# v+0.1 (dfe-* apps only). Empty = use base/chart defaults.
+scaling: {}

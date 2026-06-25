@@ -1,0 +1,12 @@
+# Secrets never live in this repo -- they go via Vault / External Secrets.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+credentials.json
+
+# OS / editor junk
+.DS_Store
+*.swp

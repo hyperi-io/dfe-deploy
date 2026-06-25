@@ -1,0 +1,17 @@
+# pins.yaml -- the HyperI-provided base, referenced by PINNED version.
+#
+# This is the only coupling to the vendor repos. The base is pulled by reference
+# (Argo CD multi-source / Helm dependency / OCI) at these versions -- never
+# vendored in, never a git submodule. To update the base: bump a version here and
+# commit; your infra/ and config/ are untouched.
+#
+# Pin policy (see dfe-docs): adopt a version only once it is >= 7 days old
+# (supply-chain cooldown) and prefer an LTS line where one exists.
+
+base:
+  dfe-infra: "2.2.0"      # charts, appsets, defaults, deployment machinery
+  dfe-schemas: "2.2.0"    # baseline tables/views/DDL
+
+# Release channel this environment tracks (spike | alpha | beta | stable).
+# Dev/devex -> alpha; staging -> beta; production / customer -> stable.
+channel: "stable"
