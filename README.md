@@ -31,13 +31,24 @@ it lives in the app databases (HyperDX FerretDB / Valkey).
 
 ## How a real deployment uses it
 
-Seed once, owned thereafter:
+Seed once, owned thereafter. Three supported paths, in order of preference:
 
-- **Self-contained / air-gapped (default):** `dfe-infra` bootstrap seeds an
-  **in-cluster Gitea** repo from this template. Argo CD, dfe-engine and operators
-  read/write that in-cluster repo.
-- **GitHub/GitLab-hosted:** use this template ("Use this template") to create your
-  own `dfe-deploy` repo; point Argo CD + dfe-engine at it.
+1. **Bootstrap-seeded in-cluster repo (default, air-gap safe):** `dfe-infra`
+   bootstrap seeds this template -- at the stack release's matching tag -- into
+   the bundled **in-cluster Forgejo**. Argo CD, dfe-engine and operators
+   read/write that repo.
+2. **Forge template copy (GitHub/GitLab-hosted):** GitHub "Use this template"
+   (the flag is set on this repo) or GitLab "new from template" -- fresh
+   private repo, clean history, no upstream lineage.
+3. **Clone and re-home (any forge / manual):** clone at the release tag, remove
+   `origin`, push to your own remote.
+
+**Never FORK this repo.** A fork of a public repo cannot be private (your
+deploy repo carries your config), and fork lineage invites merge-from-upstream
+-- but base updates arrive by bumping `pins.yaml`, never by merging template
+history. Full rationale + the stack-version model:
+`dfe-docs/deployment/state-and-repos.md` and
+`dfe-docs/deployment/stack-versioning.md`.
 
 ## Who writes what
 

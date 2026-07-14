@@ -9,9 +9,24 @@
 # (supply-chain cooldown) and prefer an LTS line where one exists.
 
 base:
-  dfe-infra: "2.2.0"      # charts, appsets, defaults, deployment machinery
-  dfe-schemas: "2.2.0"    # baseline tables/views/DDL
+  dfe-infra: "2.2.0"      # charts, appsets, defaults, deployment machinery.
+  #                         ONE pin selects the WHOLE certified stack: dfe-infra's
+  #                         versions.yaml at this tag is the stack manifest (every
+  #                         dfe-* app image, operator, data service). See
+  #                         dfe-docs/deployment/stack-versioning.md.
+  dfe-schemas: "2.2.0"    # baseline tables/views/DDL (lockstep tag by default)
 
 # Release channel this environment tracks (spike | alpha | beta | stable).
 # Dev/devex -> alpha; staging -> beta; production / customer -> stable.
 channel: "stable"
+
+# Per-component overrides -- move ONE component off the certified set, at your
+# own documented risk. Precedence: overrides > the certified manifest; use
+# tag@sha256 digests, never floating tags (rejected otherwise). dfe-engine
+# prints a SUPPORT-DRIFT notice at startup for every entry here. To apply an
+# override to the cluster, generate the per-app helm values fragment for your
+# infra/ overlay:
+#   dfe-infra/scripts/dfe-stack resolve --pins pins.yaml --emit-values infra/values-overrides.yaml
+# overrides:
+#   apps:
+#     dfe-receiver: "v1.16.0@sha256:..."
