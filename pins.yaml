@@ -3,7 +3,7 @@
 # This is the only coupling to the vendor repos. The base is pulled by reference
 # (Argo CD multi-source / Helm dependency / OCI) at these versions -- never
 # vendored in, never a git submodule. To update the base: bump a version here and
-# commit; your infra/ and config/ are untouched.
+# commit; your values/ and config/ are untouched.
 #
 # Pin policy (see dfe-docs): adopt a version only once it is >= 7 days old
 # (supply-chain cooldown) and prefer an LTS line where one exists.
@@ -24,9 +24,11 @@ channel: "stable"
 # own documented risk. Precedence: overrides > the certified manifest; use
 # tag@sha256 digests, never floating tags (rejected otherwise). dfe-engine
 # prints a SUPPORT-DRIFT notice at startup for every entry here. To apply an
-# override to the cluster, generate the per-app helm values fragment for your
-# infra/ overlay:
-#   dfe-infra/scripts/dfe-stack resolve --pins pins.yaml --emit-values infra/values-overrides.yaml
+# override to the cluster, emit the per-service fragments and MERGE each into
+# that service's existing values/{service}-{instance}-values.yaml (never a new
+# standalone file - the Argo files generator treats every values/*-values.yaml
+# as an app):
+#   dfe-infra/scripts/dfe-stack resolve --pins pins.yaml --emit-values -
 # overrides:
 #   apps:
 #     dfe-receiver: "v1.16.0@sha256:..."

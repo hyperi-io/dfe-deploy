@@ -17,7 +17,8 @@ is **created/local** to a deployment, and **references** the HyperI-provided bas
 ```
 dfe-deploy/                 # RW -- yours, per environment, survives base updates
   pins.yaml                 # pinned dfe-infra + dfe-schemas versions (the base, by reference)
-  infra/                    # Argo-WATCHED overlay: scaling, enablement, cloud specifics
+  values/                   # Argo-WATCHED helm values: ONE file per service instance
+                            #   ({service}-{instance}-values.yaml; file presence = app enabled)
   config/                   # HOT-READ config-as-code (apps + dfe-engine read this)
     sources/                #   source definitions (all-in-one doc, gitcrud `sources` class)
     schemas/                #   custom schemas
@@ -56,14 +57,14 @@ history. Full rationale + the stack-version model:
 | Path | Written by | Read by |
 |------|-----------|---------|
 | `pins.yaml` | ops (bump to update base) | bootstrap / Argo |
-| `infra/` | ops (GA); dfe-engine app-params (v+0.1) | Argo CD |
+| `values/` | ops AND dfe-engine - the SAME per-service files (hard standard: the only helm-values home; see `values/README.md`) | Argo CD |
 | `config/` | dfe-engine + analysts | dfe-* apps + dfe-engine (hot-read); ClickHouse (DDL apply Job) |
 
 dfe-engine writes **only** this repo, by commit (auditable), and never the base.
 
 ## Updating the base
 
-Bump the versions in `pins.yaml`. Your `infra/` and `config/` are untouched. The
+Bump the versions in `pins.yaml`. Your `values/` and `config/` are untouched. The
 base (`dfe-infra`, `dfe-schemas`) is pulled by reference at the pinned version
 (Argo multi-source / Helm dependency / OCI) -- never copied in, never a submodule.
 
