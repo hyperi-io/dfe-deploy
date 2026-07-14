@@ -34,9 +34,10 @@ it lives in the app databases (HyperDX FerretDB / Valkey).
 Seed once, owned thereafter. Three supported paths, in order of preference:
 
 1. **Bootstrap-seeded in-cluster repo (default, air-gap safe):** `dfe-infra`
-   bootstrap seeds this template -- at the stack release's matching tag -- into
-   the bundled **in-cluster Forgejo**. Argo CD, dfe-engine and operators
-   read/write that repo.
+   bootstrap stands up the bundled **in-cluster Forgejo** and creates the deploy
+   repo; this template -- at the stack release's matching tag -- seeds it
+   (automated seeding lands with the first tagged stack release). Argo CD,
+   dfe-engine and operators read/write that repo.
 2. **Forge template copy (GitHub/GitLab-hosted):** GitHub "Use this template"
    (the flag is set on this repo) or GitLab "new from template" -- fresh
    private repo, clean history, no upstream lineage.
