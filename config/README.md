@@ -10,6 +10,7 @@ overlay adds/extends).
 
 | Subdir | Holds | Written by |
 |--------|-------|-----------|
+| `sources/` | source definitions (all-in-one doc, gitcrud `sources` class) | humans + dfe-engine |
 | `schemas/` | custom tables/views/fieldmaps | humans + dfe-engine (generated DDL) |
 | `transforms/` | VRL, Vector.dev YAML, WASM transform configs | humans + dfe-engine |
 | `rules/` | detection rules | analysts + dfe-engine |

@@ -1,8 +1,10 @@
 # dfe-deploy -- DFE per-environment deploy repo (template / seed)
 
-This repository is the **template** for a DFE deployment's git store. It is **not**
-used directly. Each deployment instantiates its **own read-write copy**, which
-becomes that environment's deployment source of truth.
+This repository is the **template** for a DFE deployment's git store. It is **never**
+used directly as a live deploy repo - not by any customer and not by HyperI's own
+environments. Each deployment instantiates its **own read-write copy** (fork,
+"Use this template", or a bootstrap-seeded in-cluster clone), which becomes that
+environment's deployment source of truth.
 
 > Canonical model + diagrams: `dfe-docs/deployment/state-and-repos.md`.
 
@@ -17,6 +19,7 @@ dfe-deploy/                 # RW -- yours, per environment, survives base update
   pins.yaml                 # pinned dfe-infra + dfe-schemas versions (the base, by reference)
   infra/                    # Argo-WATCHED overlay: scaling, enablement, cloud specifics
   config/                   # HOT-READ config-as-code (apps + dfe-engine read this)
+    sources/                #   source definitions (all-in-one doc, gitcrud `sources` class)
     schemas/                #   custom schemas
     transforms/             #   VRL / Vector / WASM transform configs
     rules/  hunts/  alerts/ #   detection content
