@@ -16,9 +16,13 @@ base:
   #                         dfe-docs/deployment/stack-versioning.md.
   dfe-schemas: "2.2.0"    # baseline tables/views/DDL (lockstep tag by default)
 
-# Release channel this environment tracks (spike | alpha | beta | stable).
-# Dev/devex -> alpha; staging -> beta; production / customer -> stable.
-channel: "stable"
+# Release channel this environment tracks: alpha | beta | rc | release
+# (the maturity ladder). Reconciled 2026-07-16 with the dfe-infra SSoT ladder --
+# "spike" was dropped (it inverts SemVer prerelease ordering) and "rc" added.
+# A channel resolves to the latest stack of that maturity (versions.yaml
+# current/latest/lts + per-stack maturity). Dev/devex -> alpha or rc;
+# staging -> rc; production/customer -> release.
+channel: "release"
 
 # Per-component overrides -- move ONE component off the certified set, at your
 # own documented risk. Precedence: overrides > the certified manifest; use
