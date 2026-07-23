@@ -1,0 +1,33 @@
+# Validate the governance/ tree (shipped actions + protected-var policies) on
+# every PR and push. Structural mirror of dfe-engine's rules - a broken dial
+# never merges. Chart-path drift is dfe-infra's chart validation's job.
+name: validate-governance
+
+on:
+  pull_request:
+    paths:
+      - "governance/**"
+      - "tools/validate_governance.py"
+      - "tools/requirements-validate.txt"
+  push:
+    branches: [main]
+    paths:
+      - "governance/**"
+      - "tools/validate_governance.py"
+      - "tools/requirements-validate.txt"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install pinned PyYAML
+        run: python3 -m pip install --require-hashes -r tools/requirements-validate.txt
+      - name: Validate governance tree
+        run: python3 tools/validate_governance.py

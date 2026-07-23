@@ -10,3 +10,7 @@ credentials.json
 # OS / editor junk
 .DS_Store
 *.swp
+
+# Python bytecode from tools/ (the governance validator runs here in CI)
+__pycache__/
+*.pyc
