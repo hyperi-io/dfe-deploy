@@ -1,0 +1,98 @@
+# Tag main with a semantic version and render the changelog.
+#
+# dfe-deploy is a template repo of YAML and docs, so the full hyperi-ci pipeline
+# (build, test, container, publish) has nothing to do here. What it does need is
+# the same TAGGING regime as the rest of the estate, because deployments pin this
+# template by tag (dfe-infra versions.yaml `content.dfe-deploy`) and an untagged
+# repo cannot be pinned to.
+#
+# The toolchain and the release config come from hyperi-ci's shared composite, so
+# the bump rules stay identical to every other repo: feat -> minor, fix/perf ->
+# patch, breaking -> major, anything else no release.
+#
+# semantic-release tags HEAD -- the human commit -- and only WRITES CHANGELOG.md.
+# Committing it back afterwards, untagged, is what keeps a tag from ever pointing
+# at machine-authored history.
+name: release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create the tag, the release, and the changelog commit
+
+# A second push must not tag concurrently with the first. Never cancel: a
+# half-finished release leaves a tag with no changelog behind it.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0   # semantic-release reads history and existing tags
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+
+      # Gate before tagging. A tag is permanent, so a broken governance tree must
+      # not get one -- the same content validate-governance.yaml runs on PRs.
+      - name: Install pinned PyYAML
+        run: python3 -m pip install --require-hashes -r tools/requirements-validate.txt
+
+      - name: Gate -- governance tree
+        run: python3 tools/validate_governance.py
+
+      - uses: hyperi-io/hyperi-ci/.github/actions/setup-semantic-release@main
+
+      - name: Tag + render the changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
+
+      # The tag is the only reliable signal that a release happened:
+      # semantic-release exits 0 either way, and most pushes here are docs or
+      # config changes that earn no bump.
+      - name: Did it release?
+        id: rel
+        run: |
+          set -euo pipefail
+          TAG=$(git tag --points-at HEAD --list 'v[0-9]*' | head -n1)
+          if [ -z "$TAG" ]; then
+            echo "no release-worthy commits since the last tag"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+          else
+            echo "released ${TAG}"
+            echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish the GitHub release
+        if: steps.rel.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ steps.rel.outputs.tag }}" --verify-tag --title "dfe-deploy ${{ steps.rel.outputs.tag }}" --generate-notes
+
+      # Untagged, and after the tag exists. [skip ci] stops it retriggering this
+      # workflow, which would find nothing to release and run the gate for nothing.
+      - name: Commit the changelog back
+        if: steps.rel.outputs.tag != ''
+        run: |
+          set -euo pipefail
+          # --porcelain, not `git diff`: on the first release CHANGELOG.md is a
+          # NEW file, which git diff reports as no change.
+          if [ -z "$(git status --porcelain -- CHANGELOG.md)" ]; then
+            echo "CHANGELOG.md unchanged"
+            exit 0
+          fi
+          git config user.name "hyperi-ci"
+          git config user.email "ci@hyperi.io"
+          git add CHANGELOG.md
+          git commit -m "chore(release): ${{ steps.rel.outputs.tag }} [skip ci]"
+          git push origin HEAD:main
