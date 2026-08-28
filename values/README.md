@@ -25,3 +25,45 @@ How it works:
   (`dfe-stack resolve --emit-values` prints per-service fragments with the
   target filename) - never as a new standalone file, which would spawn a
   phantom app.
+
+## What an instance file must carry
+
+The `deploy` block is not optional: the ApplicationSet reads it to name the
+Argo Application, so a file without it produces nothing at all.
+
+```yaml
+deploy:
+  service: dfe-transform-vrl
+  instance: edge
+env:
+  # scalo defaults the OTel service.name to the app name, which leaves two
+  # instances of one app indistinguishable in the otel tables.
+  OTEL_SERVICE_NAME: dfe-transform-vrl-edge
+keda:
+  minReplicaCount: 1
+  maxReplicaCount: 10
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {cpu: 500m, memory: 512Mi}
+```
+
+## Files an app reads off disk
+
+Apps that read their own content files - the transforms - carry it inline
+here, as a list of `{name, content}`. The chart renders the list into a
+ConfigMap and mounts it. Content lives in the values rather than as loose
+files in this repo because Helm cannot read a raw file out of an Argo
+`$values` source.
+
+```yaml
+transformFiles:
+  - name: 000_parse.vrl
+    content: |
+      . = parse_json!(.message)
+      .ts = to_timestamp!(.timestamp)
+```
+
+A block scalar keeps the bytes verbatim, so VRL stays exact and a Vector
+transform keeps its comments and its own nested `source: |` block. The
+ceiling is the ~1 MiB ConfigMap limit; large shipped payloads and binary
+enrichment tables belong in an image or object store, not here.
