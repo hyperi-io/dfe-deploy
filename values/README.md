@@ -47,6 +47,35 @@ resources:
   limits: {cpu: 500m, memory: 512Mi}
 ```
 
+## The receiver's ingest door
+
+`dfe-receiver` ships `exposure.mode: public`, so a fresh deploy renders a
+LoadBalancer per protocol family carrying its `exposed` listeners. The
+allow-list is `exposure.public.loadBalancerSourceRanges`, and it ships
+EMPTY, which is `0.0.0.0/0` -- the whole internet, not "unset". The
+receiver's own `server.auth.mode` defaults to `none`, so an untouched
+public deploy accepts unauthenticated posts to `/ingest` from anywhere.
+
+Set one or both in the instance file:
+
+```yaml
+exposure:
+  public:
+    loadBalancerSourceRanges:
+      - 203.0.113.0/24
+config:
+  server:
+    auth:
+      mode: bearer
+```
+
+A deployment with no LoadBalancer provisioner uses `exposure.mode:
+internal` instead, which routes ingest through the cluster Gateway on
+`receiver.{domain}` (`routes.receiver` in envoy-gateway-config -- enable
+both together). That path carries HTTP only, so any other listener left
+`exposed: true` fails the chart render rather than deploying a port
+nothing reaches.
+
 ## Files an app reads off disk
 
 Apps that read their own content files - the transforms - carry it inline
