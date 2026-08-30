@@ -1,9 +1,30 @@
-# values/ -- THE helm-values home (hard standard)
+# values/ -- THE helm-values home for APP INSTANCES (hard standard)
 
-**Every helm value for this environment lives here, one file per service
-instance: `{service}-{instance}-values.yaml`. Human and engine edits land in
-the SAME files.** There is no second overlay directory - this rule is the
-standard, not a convention (dfe-docs `deployment/state-and-repos.md`).
+**Every helm value for an app instance in this environment lives here, one file
+per service instance: `{service}-{instance}-values.yaml`. Human and engine edits
+land in the SAME files.** (dfe-docs `deployment/state-and-repos.md`.)
+
+The substrate and platform charts - ClickHouse, Kafka, the network policies, the
+gateway - are NOT app instances and do not belong here. They have their own
+overlay directory, [`infra/`](../infra/README.md), for the reason in the next
+section.
+
+## Nothing but instance files, and nothing in a subdirectory
+
+The ApplicationSet's git files generator globs `values/*-values.yaml`, and Argo
+CD passes that to `git ls-files` as a pathspec. A pathspec without `:(glob)`
+magic lets `*` match `/`, so `values/anything/foo-values.yaml` MATCHES and
+becomes an Argo application too. Proven:
+
+```
+$ git ls-files --full-name -- 'values/*-values.yaml'
+values/dfe-receiver-default-values.yaml
+values/infra/clickhouse-cluster-values.yaml     <- a subdirectory does not hide it
+```
+
+So a subdirectory under `values/` is not a safe parking spot for anything. That
+is why `infra/` sits at the repo root: the pathspec is anchored on `values/`, so
+nothing under `infra/` can ever match it.
 
 How it works:
 
