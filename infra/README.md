@@ -55,13 +55,15 @@ to the in-cluster service names.
 ## The storage model, and the keys the engine refuses to change
 
 Both data stores take a storage model that is chosen at deploy and refused
-afterwards:
+afterwards. Models are named `<family>-<bulk>`: the family says whether data
+MOVES to the bulk store or is COPIED to it, the bulk half says what that store
+is. `local` is the default on both and changes nothing.
 
 ```yaml
 # infra/clickhouse-cluster.yaml
 clickhouse:
-  storageModel: s3backed          # or local (default)
-  s3:
+  storageModel: cached-object     # or tiered-block, or local (default)
+  objectStore:
     endpoint: https://my-bucket.s3.ap-southeast-2.amazonaws.com/clickhouse/
     cacheSize: 20Gi
 ```
@@ -69,8 +71,8 @@ clickhouse:
 ```yaml
 # infra/kafka.yaml
 kafka:
-  storageModel: tiered            # or local (default)
-  tiered:
+  storageModel: tiered-object     # or local (default)
+  tieredObject:
     className: io.aiven.kafka.tieredstorage.RemoteStorageManager
     classPath: /opt/kafka/plugins/tiered-storage/*
     config:
@@ -78,31 +80,43 @@ kafka:
       storage.s3.bucket.name: my-kafka-bucket
 ```
 
-`local` is the default and changes nothing. `s3backed` puts ClickHouse parts on
-an object-store disk behind a local read-through cache, so the PVC stops being
-the capacity ceiling. `tiered` moves closed Kafka segments to object storage
-(KIP-405), so the PVC sizes the hot window. Strimzi ships no RemoteStorageManager,
-so a tiered deploy needs a broker image carrying a plugin; the chart fails the
-render rather than deploying a broker that looks configured and tiers nothing.
+`cached-object` puts ClickHouse parts on an object-store disk behind a local
+read-through cache, so the PVC stops being the capacity ceiling and the cache
+stays disposable. `tiered-block` ranks a hot SSD volume over a cold bulk volume
+and demotes the oldest parts as the hot one fills, needing no object store -
+data MOVES, so both volumes must be durable. `tiered-object` moves closed Kafka
+segments to object storage (KIP-405 tiered storage), so the PVC sizes the hot
+window; Strimzi ships no RemoteStorageManager, so it needs a broker image
+carrying a plugin, and the chart fails the render rather than deploying a broker
+that looks configured and tiers nothing.
+
+Every combination, whether it ships and how well proven it is: dfe-infra
+`docs/deployment/storage.md`.
 
 Object-store CREDENTIALS never appear in these files. Both charts read them from
 the environment, wired from a Secret the secrets store materialises - seed
 `<project>/<env>/clickhouse/s3` and `<project>/<env>/kafka/tiered` with
 `access_key_id` and `secret_access_key`. A credential that already lives at a
 different path or under different field names binds without reseeding:
-`clickhouse.s3.remoteKey` / `kafka.tiered.remoteKey` name the path,
+`clickhouse.objectStore.remoteKey` / `kafka.objectStore.remoteKey` name the path,
 `accessKeyProperty` / `secretKeyProperty` name the fields, and
 `secretStoreName` selects the store that mounts them.
 
 The engine holds these as protected vars and refuses a post-deploy edit with the
-policy that blocked it (`governance/policies/storage-model.yaml`):
+policy that blocked it (`governance/policies/storage-layout.yaml`):
 
 | key | why it locks |
 |---|---|
 | `clickhouse.mode`, `kafka.mode` | where the data lives; moving it strands every existing row |
 | `clickhouse.storageModel`, `kafka.storageModel` | the on-disk layout, chosen once |
-| `clickhouse.s3.*`, `kafka.tiered.*` | the object-store location the existing parts and segments are in |
+| `clickhouse.objectStore.*`, `kafka.objectStore.*` | the object-store location the existing parts and segments are in |
+| `clickhouse.tieredBlock.*`, `kafka.tieredObject.*` | the cold volume holding the only copy of what it carries, and the plugin that reaches the bucket |
 | `clickhouse.storage.size`, `.storageClass` and the kafka pair | `volumeClaimTemplates` are immutable, so no sync applies it |
+
+A deployment created before this vocabulary keeps its `storage-model.yaml`
+alongside the new file - the engine never rewrites a policy it already seeded -
+and the shipped lock carries the older key spellings so nothing goes unprotected
+while a deployment is still on an older chart.
 
 A holder of `helmvars:override` can still make a deliberate exception, and a
 direct git commit still gets through - the policy governs the API, not the repo.
@@ -126,7 +140,7 @@ freely in both directions.
 Growing a PVC needs `allowVolumeExpansion: true` on the StorageClass and, because
 `volumeClaimTemplates` are immutable, a StatefulSet recreate. `local-path` has no
 resize support at all. That is what the storage model exists to avoid, so reach
-for `s3backed` / `tiered` before reaching for a bigger disk. The size and class
+for a non-`local` model before reaching for a bigger disk. The size and class
 keys are protected for the same reason.
 
 dfe-docker is the other way round: `DFE_DATA_ROOT` picks WHICH disk, and a bind
