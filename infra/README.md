@@ -98,17 +98,32 @@ policy that blocked it (`governance/policies/storage-model.yaml`):
 | `clickhouse.mode`, `kafka.mode` | where the data lives; moving it strands every existing row |
 | `clickhouse.storageModel`, `kafka.storageModel` | the on-disk layout, chosen once |
 | `clickhouse.s3.*`, `kafka.tiered.*` | the object-store location the existing parts and segments are in |
+| `clickhouse.storage.size`, `.storageClass` and the kafka pair | `volumeClaimTemplates` are immutable, so no sync applies it |
 
 A holder of `helmvars:override` can still make a deliberate exception, and a
 direct git commit still gets through - the policy governs the API, not the repo.
 Changing any of these on a live deployment is a data migration, not a values edit.
+
+## Node and broker counts go up, never down
+
+`clickhouse.replicas`, `clickhouse.keeper.replicas` and `kafka.replicas` are
+accepted upward and refused downward, and not out of caution. Removing a
+ClickHouse node drops a copy of the data, or the data itself when the cluster is
+sharded; a Kafka broker takes every partition replica it held unless those are
+reassigned first; a Keeper ensemble can lose its Raft quorum, which takes every
+replicated table read-only with it. Do the move, then lower the count.
+
+The refusal compares what the overlay stack DECLARES before and after, so nothing
+declared means nothing to compare and the write is accepted. CPU and memory move
+freely in both directions.
 
 ## Storage size is not the answer
 
 Growing a PVC needs `allowVolumeExpansion: true` on the StorageClass and, because
 `volumeClaimTemplates` are immutable, a StatefulSet recreate. `local-path` has no
 resize support at all. That is what the storage model exists to avoid, so reach
-for `s3backed` / `tiered` before reaching for a bigger disk.
+for `s3backed` / `tiered` before reaching for a bigger disk. The size and class
+keys are protected for the same reason.
 
 dfe-docker is the other way round: `DFE_DATA_ROOT` picks WHICH disk, and a bind
 mount takes whatever that disk has. k8s locks size and class; docker locks
