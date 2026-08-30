@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.2](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.1...v1.0.2) (2026-08-30)
+
+### Bug Fixes
+
+* **governance:** follow the storage vocabulary into the template ([83cb869](https://github.com/hyperi-io/dfe-deploy/commit/83cb869ac2ea00ce4ec1b5a984c7ab26e6b3e0fd))
+
 ## [1.0.1](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.0...v1.0.1) (2026-08-30)
 
 ### Bug Fixes
