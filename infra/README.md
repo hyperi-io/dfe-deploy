@@ -88,7 +88,11 @@ render rather than deploying a broker that looks configured and tiers nothing.
 Object-store CREDENTIALS never appear in these files. Both charts read them from
 the environment, wired from a Secret the secrets store materialises - seed
 `<project>/<env>/clickhouse/s3` and `<project>/<env>/kafka/tiered` with
-`access_key_id` and `secret_access_key`.
+`access_key_id` and `secret_access_key`. A credential that already lives at a
+different path or under different field names binds without reseeding:
+`clickhouse.s3.remoteKey` / `kafka.tiered.remoteKey` name the path,
+`accessKeyProperty` / `secretKeyProperty` name the fields, and
+`secretStoreName` selects the store that mounts them.
 
 The engine holds these as protected vars and refuses a post-deploy edit with the
 policy that blocked it (`governance/policies/storage-model.yaml`):
