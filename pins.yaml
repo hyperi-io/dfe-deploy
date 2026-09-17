@@ -14,7 +14,13 @@ base:
   #                         versions.yaml at this tag is the stack manifest (every
   #                         dfe-* app image, operator, data service). See
   #                         dfe-docs/deployment/stack-versioning.md.
-  dfe-schemas: "2.2.0"    # baseline tables/views/DDL (lockstep tag by default)
+#
+# There is deliberately NO dfe-schemas pin. The wheel rides inside the dfe-engine
+# image and the engine applies it at startup, so the engine pin already selects
+# the schema release -- GET /api/v1/system/version reports it as `schemas`. A
+# pin here would be a third version number for one artefact and could name a
+# release the running engine does not carry. A deployment that wants a different
+# schema tree adds config/schemas/ as an overlay, which is additive by design.
 
 # Release channel this environment tracks: alpha | beta | rc | release
 # (the maturity ladder). Reconciled 2026-07-16 with the dfe-infra SSoT ladder --
