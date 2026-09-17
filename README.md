@@ -12,16 +12,16 @@ environment's deployment source of truth.
 
 The "one throat to choke" for a single DFE environment. It holds everything that
 is **created/local** to a deployment, and **references** the HyperI-provided base
-(`dfe-infra`, `dfe-schemas`) by pinned version -- it never vendors them in.
+(`dfe-infra`) by pinned version -- it never vendors it in.
 
 ```
 dfe-deploy/                 # RW -- yours, per environment, survives base updates
-  pins.yaml                 # pinned dfe-infra + dfe-schemas versions (the base, by reference)
+  pins.yaml                 # pinned dfe-infra version (the base, by reference)
   values/                   # Argo-WATCHED helm values: ONE file per service instance
                             #   ({service}-{instance}-values.yaml; file presence = app enabled)
   config/                   # HOT-READ config-as-code (apps + dfe-engine read this)
     sources/                #   source definitions (all-in-one doc, gitcrud `sources` class)
-    schemas/                #   custom schemas
+    schemas/                #   this deployment's additive schema overlay
     transforms/             #   VRL / Vector / WASM transform configs
     rules/  hunts/  alerts/ #   detection content
     oidc/                   #   OIDC providers / RBAC assignments
@@ -58,15 +58,17 @@ history. Full rationale + the stack-version model:
 |------|-----------|---------|
 | `pins.yaml` | ops (bump to update base) | bootstrap / Argo |
 | `values/` | ops AND dfe-engine - the SAME per-service files (hard standard: the only helm-values home; see `values/README.md`) | Argo CD |
-| `config/` | dfe-engine + analysts | dfe-* apps + dfe-engine (hot-read); ClickHouse (DDL apply Job) |
+| `config/` | dfe-engine + analysts | dfe-* apps + dfe-engine (hot-read). `config/schemas/` is the engine's schema overlay, applied by the engine at startup -- there is no DDL Job |
 
 dfe-engine writes **only** this repo, by commit (auditable), and never the base.
 
 ## Updating the base
 
-Bump the versions in `pins.yaml`. Your `values/` and `config/` are untouched. The
-base (`dfe-infra`, `dfe-schemas`) is pulled by reference at the pinned version
-(Argo multi-source / Helm dependency / OCI) -- never copied in, never a submodule.
+Bump the version in `pins.yaml`. Your `values/` and `config/` are untouched. The
+base (`dfe-infra`) is pulled by reference at the pinned version (Argo
+multi-source / Helm dependency / OCI) -- never copied in, never a submodule. The
+schema release moves with the dfe-engine image that stack pins, because the
+`dfe-schemas` wheel rides inside it.
 
 ---
 
