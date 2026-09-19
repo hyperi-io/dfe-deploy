@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.4](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.3...v1.0.4) (2026-09-19)
+
+### Bug Fixes
+
+* **docs:** give the README a Context section and write the architecture doc ([#5](https://github.com/hyperi-io/dfe-deploy/issues/5)) ([31d622d](https://github.com/hyperi-io/dfe-deploy/commit/31d622d1bf16d60aebfda9678c52cc5857cde406))
+
 ## [1.0.3](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.2...v1.0.3) (2026-09-17)
 
 ### Bug Fixes
