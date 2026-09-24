@@ -145,6 +145,6 @@ These are the ones reading the files will not tell you.
 ## What is deliberately not here
 
 Per-user UI state -- saved searches, dashboards, preferences -- lives in the app
-databases (HyperDX FerretDB, Valkey), never in git. Secrets live in the secrets
+databases (HyperDX FerretDB), never in git. Secrets live in the secrets
 store. Nothing in `config/` is a Kubernetes manifest, and Argo never applies it
 as one: the apps and the engine read that tree directly off disk.
