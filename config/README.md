@@ -20,7 +20,7 @@ overlay adds/extends).
 | `oidc/` | OIDC providers, RBAC assignments | dfe-engine |
 
 NOT here: per-user saved searches / dashboards / preferences -- those are user
-state in the app databases (HyperDX FerretDB / Valkey), never git.
+state in the app databases (HyperDX FerretDB), never git.
 
 ## `schemas/` -- the deployment's own overlay
 
