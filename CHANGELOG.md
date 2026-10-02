@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.5](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.4...v1.0.5) (2026-10-02)
+
+### Bug Fixes
+
+* **governance:** lock the sizing keys a chart carries and explain the sizing directory ([#3](https://github.com/hyperi-io/dfe-deploy/issues/3)) ([36a2d5f](https://github.com/hyperi-io/dfe-deploy/commit/36a2d5f8237757dbcd90093ebf55a41113d2536c))
+
 ## [1.0.4](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.3...v1.0.4) (2026-09-19)
 
 ### Bug Fixes
