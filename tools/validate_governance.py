@@ -8,11 +8,12 @@
 #  Copyright:    (c) 2026 HYPERI PTY LIMITED
 """Validate governance/actions/*.yaml and governance/policies/*.yaml.
 
-Mirrors dfe-engine's structural rules (governance/models.py +
-gitcrud/commit_policy.py) so a broken action is caught at PR time, before the
-engine ever loads it. Deliberately dependency-light: stdlib + PyYAML only.
-Chart-path drift is out of scope here - dfe-infra's chart validation owns the
-charts these paths point into.
+Mirrors dfe-engine's structural rules (governance/models.py) plus the static
+half of its value rules (gitcrud/commit_policy.py: unpinned/floating image
+refs, and keda_owns_replicas for a helmvars-class change) so a broken action
+is caught at PR time, before the engine ever loads it. Deliberately
+dependency-light: stdlib + PyYAML only. Chart-path drift is out of scope here
+- dfe-infra's chart validation owns the charts these paths point into.
 
 Usage:
     python3 tools/validate_governance.py            # validate ./governance
@@ -45,6 +46,10 @@ _GOVERNANCE_CLASSES = {
 }
 
 _PARAM_TYPES = {"enum", "int", "float"}
+
+# Mirror of dfe_engine.appmgmt.instances.HELMVARS_CLASS: the one gitcrud class an
+# app overlay lands in, and the only class keda_by_default() ever reads True for.
+_HELMVARS_CLASS = "helmvars"
 
 
 def _name_ok(name: object) -> bool:
@@ -89,7 +94,23 @@ def _check_param_spec(pname: str, spec: object, errors: list[str], where: str) -
             errors.append(f"{where}: param '{pname}' default {default!r} is outside [{low}, {high}]")
 
 
-def _check_change(idx: int, change: object, params: dict, errors: list[str], where: str) -> None:
+def _keda_disabled_for(changes: list, cls: object, name: object) -> bool:
+    """Whether another change in the same action sets ``keda.enabled: false`` for (cls, name)."""
+    for other in changes:
+        if not isinstance(other, dict) or other.get("cls") != cls or other.get("name") != name:
+            continue
+        other_path = other.get("path")
+        is_keda_enabled = other_path == "keda.enabled" or (
+            isinstance(other_path, str) and other_path.endswith(".keda.enabled")
+        )
+        if is_keda_enabled and other.get("value") is False:
+            return True
+    return False
+
+
+def _check_change(
+    idx: int, change: object, changes: list, params: dict, errors: list[str], where: str
+) -> None:
     w = f"{where}: changes[{idx}]"
     if not isinstance(change, dict):
         errors.append(f"{w}: must be a mapping")
@@ -97,7 +118,8 @@ def _check_change(idx: int, change: object, params: dict, errors: list[str], whe
     for key in ("cls", "name", "path"):
         if not _name_ok(change.get(key)) and key != "path":
             errors.append(f"{w}: '{key}' must be a safe non-empty name")
-    cls, path, value = change.get("cls"), change.get("path"), change.get("value")
+    cls, name = change.get("cls"), change.get("name")
+    path, value = change.get("path"), change.get("value")
     if not isinstance(path, str) or not path:
         errors.append(f"{w}: 'path' must be a non-empty dot-path")
         path = ""
@@ -105,9 +127,16 @@ def _check_change(idx: int, change: object, params: dict, errors: list[str], whe
         errors.append(f"{w}: missing 'value'")
     if cls in _GOVERNANCE_CLASSES:
         errors.append(f"{w}: actions may not change the governance class ('{cls}')")
-    # Mirror of commit_policy.validate_change: controller-owned + floating refs.
-    if path == "replicaCount" or path.endswith(".replicaCount"):
-        errors.append(f"{w}: replicaCount is controller-owned (KEDA); use keda.* dials")
+    # Mirror of commit_policy.keda_owns_replicas (engine #710): refuse only a
+    # helmvars-class replicaCount that doesn't also disable KEDA in this action -
+    # a non-helmvars chart's KEDA default and an unplaceable overlay's manifest
+    # are unknowable here, so the engine stays authoritative for those.
+    is_replica_count = path == "replicaCount" or path.endswith(".replicaCount")
+    if is_replica_count and cls == _HELMVARS_CLASS and not _keda_disabled_for(changes, cls, name):
+        errors.append(
+            f"{w}: replicaCount on a helmvars app needs 'keda.enabled: false' "
+            "in the same action - KEDA may own the count"
+        )
     leaf = path.rsplit(".", 1)[-1]
     if leaf in {"tag", "image"} and isinstance(value, str):
         v = value.strip()
@@ -155,7 +184,7 @@ def _check_action(path: Path, errors: list[str]) -> None:
         errors.append(f"{where}: 'changes' must be a non-empty list")
         return
     for idx, change in enumerate(changes):
-        _check_change(idx, change, params, errors, where)
+        _check_change(idx, change, changes, params, errors, where)
 
 
 def _check_policy(path: Path, errors: list[str]) -> None:
