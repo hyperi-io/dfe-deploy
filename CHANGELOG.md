@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.6](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.5...v1.0.6) (2026-10-02)
+
+### Bug Fixes
+
+* **governance:** mirror the engine's KEDA-aware replicaCount rule ([#8](https://github.com/hyperi-io/dfe-deploy/issues/8)) ([a28368c](https://github.com/hyperi-io/dfe-deploy/commit/a28368c472396afb2863487896c242fdc536ffe8)), closes [#710](https://github.com/hyperi-io/dfe-deploy/issues/710)
+
 ## [1.0.5](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.4...v1.0.5) (2026-10-02)
 
 ### Bug Fixes
