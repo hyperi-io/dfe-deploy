@@ -1,27 +1,11 @@
 name: sizing-locks
 description: >-
-  The six fields the upgrade classifier (dfe-ops upgrade) refuses to move
-  without an explicit --migrate: each one either strands the data already
-  written under the old value, or costs nothing less than a cluster rebuild to
-  change. The reason behind each field is dfe-infra's sizing/sizing.yaml
-  locked: section; this file is the mechanism that refuses the write. Holders
-  of helmvars:override can still make a deliberate exception.
+  The sizing fields dfe-infra's resolver refuses to move without --migrate (the locked: section of its sizing/sizing.yaml), held here as protected vars wherever a chart key carries one. Holders of helmvars:override can still make a deliberate exception.
 protected:
-  # A keyed topic cannot be repartitioned without breaking hash(key) %
-  # partitions, so locking the dial inputs blocks the resolver from ever
-  # shrinking the derived count.
+  # The partition count derives from these, and a keyed topic cannot be repartitioned without breaking hash(key) % partitions.
   - "infravars:*:kafka.sizing.*"
-  # local and cached-object put parts in different places, so changing
-  # either chart's model is a data migration, not a values edit.
-  - "infravars:*:kafka.storageModel"
-  - "infravars:*:clickhouse.storageModel"
-  # Standard to Express is a cluster replacement plus a client cutover,
-  # not an update.
-  - "infravars:*:kafka.external.msk.*"
-  # Combined to separate controllers re-forms the metadata quorum.
+  # Combined to separate KRaft controllers re-forms the metadata quorum.
   - "infravars:*:kafka.controllerPool.enabled"
-  # The cloud a deployment lives in is not a field; it is a new deployment.
+  # A deployment moved to another cloud is a new deployment.
   - "infravars:*:cloud"
-  # az_count has no chart key yet -- terraform/modules/kubernetes-cluster/
-  # aws/vpc.tf hardcodes three AZs, so nothing is locked here until it
-  # becomes a dial field.
+  # storageModel is held by storage-layout.yaml, and the MSK broker type and AZ count are OpenTofu inputs with no chart key.
