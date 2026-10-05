@@ -15,7 +15,7 @@ Two kinds of file, both optional:
   disagree about it.
 - **`<chart>.yaml`** - one chart's own values, read by the platform and data
   appsets only. The name is the dfe-infra chart directory:
-  `clickhouse-cluster.yaml`, `kafka.yaml`, `cnpg-cluster.yaml`, `ferretdb.yaml`,
+  `clickhouse-cluster.yaml`, `kafka.yaml`, `ferretdb.yaml`,
   `otel-collector.yaml`, `dfe-schema.yaml`, `kafbat.yaml`, `links.yaml`,
   `network-policies.yaml`, `envoy-gateway-config.yaml`.
 
