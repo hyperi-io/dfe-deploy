@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.7](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.6...v1.0.7) (2026-10-06)
+
+### Bug Fixes
+
+* drop the cnpg-cluster overlay from the infra README ([#9](https://github.com/hyperi-io/dfe-deploy/issues/9)) ([2b26c08](https://github.com/hyperi-io/dfe-deploy/commit/2b26c088b4744e64f289714030d63f8b41301cc8))
+
 ## [1.0.6](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.5...v1.0.6) (2026-10-02)
 
 ### Bug Fixes
