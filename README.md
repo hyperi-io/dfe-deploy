@@ -72,7 +72,7 @@ schema release moves with the dfe-engine image that stack pins, because the
 
 ---
 
-License: LicenseRef-HyperI-Proprietary -- (c) 2026 HYPERI PTY LIMITED
+Licensed under BUSL-1.1 - see [LICENSE](LICENSE). (c) 2026 HYPERI PTY LIMITED
 
 ## Context
 
