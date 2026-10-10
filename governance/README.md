@@ -35,6 +35,11 @@ instance file does not exist yet, an invoke creates it - and any
 `*-values.yaml` file IS an Argo application, so point actions only at
 instances this deployment actually runs.
 
+An action that switches a component off also switches off the engine's secret
+group for it (`secrets.<group>.enabled`, as `hunts-pause` does), and its
+counterpart switches both back on. The component's Secret is only minted while
+it is on, and the engine pod waits on any Secret it still reads.
+
 Authoring a new action: validate first with
 `POST /api/v1/governance/admin/actions/validate` (returns every violation and
 the would-be diff without committing), then define via
