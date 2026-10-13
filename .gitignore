@@ -1,7 +1,7 @@
 # Secrets never live in this repo -- they go via Vault / External Secrets.
 .env
 .env.*
-!.env.example
+!.env*.example
 *.key
 *.pem
 *.p12
@@ -14,3 +14,18 @@ credentials.json
 # Python bytecode from tools/ (the governance validator runs here in CI)
 __pycache__/
 *.pyc
+
+# Local working files (not committed)
+.claude/
+.codex/
+.cursor/
+.gemini/
+.superpowers/
+.playwright-mcp/
+.mcp.json
+.hyperi-ai
+.worktrees/
+.tmp/
+.kube/
+.secrets/
+.benchmarks/
