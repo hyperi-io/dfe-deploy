@@ -6,7 +6,7 @@ environments. Each deployment instantiates its **own read-write copy** (fork,
 "Use this template", or a bootstrap-seeded in-cluster clone), which becomes that
 environment's deployment source of truth.
 
-> Canonical model + diagrams: `dfe-docs/deployment/state-and-repos.md`.
+> Canonical model + diagrams: dfe-infra `docs/deployment/state-and-repos.md`.
 
 ## What this is
 
@@ -49,8 +49,8 @@ Seed once, owned thereafter. Three supported paths, in order of preference:
 deploy repo carries your config), and fork lineage invites merge-from-upstream
 -- but base updates arrive by bumping `pins.yaml`, never by merging template
 history. Full rationale + the stack-version model:
-`dfe-docs/deployment/state-and-repos.md` and
-`dfe-docs/deployment/stack-versioning.md`.
+dfe-infra `docs/deployment/state-and-repos.md` and
+dfe-infra `docs/deployment/stack-versioning.md`.
 
 ## Who writes what
 

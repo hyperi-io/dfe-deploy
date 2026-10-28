@@ -5,7 +5,7 @@
 # vendored in, never a git submodule. To update the base: bump a version here and
 # commit; your values/ and config/ are untouched.
 #
-# Pin policy (see dfe-docs): adopt a version only once it is >= 7 days old
+# Pin policy (see dfe-infra docs/deployment/stack-versioning.md): adopt a version only once it is >= 7 days old
 # (supply-chain cooldown) and prefer an LTS line where one exists.
 
 base:
@@ -13,7 +13,7 @@ base:
   #                         ONE pin selects the WHOLE certified stack: dfe-infra's
   #                         versions.yaml at this tag is the stack manifest (every
   #                         dfe-* app image, operator, data service). See
-  #                         dfe-docs/deployment/stack-versioning.md.
+  #                         dfe-infra docs/deployment/stack-versioning.md.
 #
 # There is deliberately NO dfe-schemas pin. The wheel rides inside the dfe-engine
 # image and the engine applies it at startup, so the engine pin already selects
