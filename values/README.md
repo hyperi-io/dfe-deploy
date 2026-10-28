@@ -2,7 +2,7 @@
 
 **Every helm value for an app instance in this environment lives here, one file
 per service instance: `{service}-{instance}-values.yaml`. Human and engine edits
-land in the SAME files.** (dfe-docs `deployment/state-and-repos.md`.)
+land in the SAME files.** (dfe-infra `docs/deployment/state-and-repos.md`.)
 
 The substrate and platform charts - ClickHouse, Kafka, the network policies, the
 gateway - are NOT app instances and do not belong here. They have their own
