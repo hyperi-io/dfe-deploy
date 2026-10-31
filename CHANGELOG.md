@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.9](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.8...v1.0.9) (2026-10-31)
+
+### Bug Fixes
+
+* hold the governance validator to the engine loader and return the receiver to its tier's ceiling ([#16](https://github.com/hyperi-io/dfe-deploy/issues/16)) ([738ba45](https://github.com/hyperi-io/dfe-deploy/commit/738ba45e7b9d2692426b627c7842efb2440bdb83))
+
 ## [1.0.7](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.6...v1.0.7) (2026-10-06)
 
 ### Bug Fixes
