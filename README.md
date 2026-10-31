@@ -1,12 +1,19 @@
-# dfe-deploy -- DFE per-environment deploy repo (template / seed)
+# dfe-deploy
 
-This repository is the **template** for a DFE deployment's git store. It is **never**
-used directly as a live deploy repo - not by any customer and not by HyperI's own
-environments. Each deployment instantiates its **own read-write copy** (fork,
-"Use this template", or a bootstrap-seeded in-cluster clone), which becomes that
-environment's deployment source of truth.
+[![License](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE)
 
-> Canonical model + diagrams: dfe-infra `docs/deployment/state-and-repos.md`.
+The template a DFE deployment's own git repo is seeded from. Each deployment takes its own read-write copy, and that copy holds everything local to it, while the base, dfe-infra, is pulled by reference at a pinned version. Nothing reads this template directly, not a customer and not our own environments.
+
+## What it gives you
+
+- `pins.yaml`: one dfe-infra tag selects the whole certified stack, so updating the base is a one-line bump that leaves your files alone.
+- `values/`: one Helm values file per app instance. A file named for the instance and carrying its `deploy` block is what turns the app on ([values/README.md](values/README.md)).
+- `config/`: sources, detection rules and hunts as config-as-code, read hot by the DFE apps and dfe-engine.
+- `config/schemas/`: an additive schema overlay dfe-engine applies at startup, once its instance file sets `DFE_SCHEMAS_OVERLAY_DIR` ([config/README.md](config/README.md)).
+- Every dfe-engine change a commit to your copy, so the audit trail is its git history.
+- `governance/` dials and protected-variable policies, checked by `tools/validate_governance.py`.
+
+Canonical model and diagrams: dfe-infra `docs/deployment/state-and-repos.md`.
 
 ## What this is
 
@@ -141,4 +148,4 @@ and the guard against an action changing a governance class. How it lies:
 
 ## Issues
 
-Open bugs: [this repo](https://github.com/hyperi-io/dfe-deploy/issues?q=is%3Aopen+is%3Aissue+type%3ABug+-label%3Abacklog+-label%3Anext-minor) | [whole DFE suite](https://github.com/search?type=issues&q=is%3Aopen+is%3Aissue+type%3ABug+-label%3Abacklog+-label%3Anext-minor+repo%3Ahyperi-io%2Fdfe-infra+repo%3Ahyperi-io%2Fdfe-docker+repo%3Ahyperi-io%2Fdfe-deploy+repo%3Ahyperi-io%2Fdfe-engine+repo%3Ahyperi-io%2Fdfe-loader+repo%3Ahyperi-io%2Fdfe-receiver+repo%3Ahyperi-io%2Fdfe-fetcher+repo%3Ahyperi-io%2Fdfe-archiver+repo%3Ahyperi-io%2Fdfe-transform-vrl+repo%3Ahyperi-io%2Fdfe-transform-vector+repo%3Ahyperi-io%2Fdfe-transform-elastic+repo%3Ahyperi-io%2Fdfe-ui+repo%3Ahyperi-io%2Fdfe-hyperdx+repo%3Ahyperi-io%2Fscalo-rs+repo%3Ahyperi-io%2Fscalo-py+repo%3Ahyperi-io%2Flogreducer+repo%3Ahyperi-io%2Fdfe-schemas+repo%3Ahyperi-io%2Fvector-vrl+repo%3Ahyperi-io%2Fculvert+repo%3Ahyperi-io%2Fclickhouse-dfe+repo%3Ahyperi-io%2Ffactbook-rs)
+Open bugs: [this repo](https://github.com/hyperi-io/dfe-deploy/issues?q=is%3Aopen+is%3Aissue+type%3ABug+-label%3Abacklog+-label%3Anext-minor) | [whole DFE suite](https://github.com/search?type=issues&q=is%3Aopen+is%3Aissue+type%3ABug+-label%3Abacklog+-label%3Anext-minor+repo%3Ahyperi-io%2Fdfe-infra+repo%3Ahyperi-io%2Fdfe-docker+repo%3Ahyperi-io%2Fdfe-deploy+repo%3Ahyperi-io%2Fdfe-engine+repo%3Ahyperi-io%2Fdfe-loader+repo%3Ahyperi-io%2Fdfe-receiver+repo%3Ahyperi-io%2Fdfe-fetcher+repo%3Ahyperi-io%2Fdfe-archiver+repo%3Ahyperi-io%2Fdfe-transform-vrl+repo%3Ahyperi-io%2Fdfe-transform-vector+repo%3Ahyperi-io%2Fdfe-transform-elastic+repo%3Ahyperi-io%2Fdfe-ui+repo%3Ahyperi-io%2Fdfe-hyperdx+repo%3Ahyperi-io%2Fscalo-rs+repo%3Ahyperi-io%2Fscalo-py+repo%3Ahyperi-io%2Flogreducer+repo%3Ahyperi-io%2Fdfe-schemas+repo%3Ahyperi-io%2Fvector-vrl+repo%3Ahyperi-io%2Fculvert+repo%3Ahyperi-io%2Fdfe-clickhouse-rs+repo%3Ahyperi-io%2Ffactbook-rs)
