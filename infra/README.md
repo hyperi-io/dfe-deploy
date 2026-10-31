@@ -57,12 +57,14 @@ to the in-cluster service names.
 Both data stores take a storage model that is chosen at deploy and refused
 afterwards. Models are named `<family>-<bulk>`: the family says whether data
 MOVES to the bulk store or is COPIED to it, the bulk half says what that store
-is. `local` is the default on both and changes nothing.
+is. Kafka defaults to `local`, which changes nothing. ClickHouse defaults to `auto`,
+which derives `cached-object` from an `objectStore.endpoint` and `local` from none,
+so an endpoint with no `storageModel` beside it is not a local deployment.
 
 ```yaml
 # infra/clickhouse-cluster.yaml
 clickhouse:
-  storageModel: cached-object     # or tiered-block, or local (default)
+  storageModel: cached-object     # or tiered-block, local, or auto (default)
   objectStore:
     endpoint: https://my-bucket.s3.ap-southeast-2.amazonaws.com/clickhouse/
     cacheSize: 20Gi

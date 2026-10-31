@@ -51,9 +51,69 @@ _PARAM_TYPES = {"enum", "int", "float"}
 # app overlay lands in, and the only class keda_by_default() ever reads True for.
 _HELMVARS_CLASS = "helmvars"
 
+# Mirror of the non-governance classes in the engine's default_registry(). An
+# action naming any other class is refused at invoke, so it is refused here first.
+_DATA_CLASSES = {
+    "helmvars",
+    "infravars",
+    "sources",
+    "compat_profiles",
+    "derived_schemas",
+    "hunts",
+    "rules",
+    "library",
+}
+
+
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """SafeLoader that refuses a repeated mapping key, as the engine's loader does.
+
+    PyYAML keeps the last of two equal keys silently, so a validator reading the
+    file that way checks a document the engine then refuses to load.
+    """
+
+
+def _construct_unique_mapping(
+    loader: _UniqueKeyLoader, node: yaml.MappingNode, deep: bool = False
+) -> dict:
+    seen: set[object] = set()
+    for key_node, _ in node.value:
+        if key_node.tag == "tag:yaml.org,2002:merge":
+            continue  # `<<` is flattened by construct_mapping, and an explicit key may override it
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            repeated = key in seen
+            seen.add(key)
+        except TypeError:  # an unhashable key: construct_mapping names it
+            continue
+        if repeated:
+            raise yaml.constructor.ConstructorError(
+                None, None, f"duplicate key {key!r}", key_node.start_mark
+            )
+    return yaml.SafeLoader.construct_mapping(loader, node, deep)
+
+
+_UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
+)
+
+
+def _load(path: Path, errors: list[str]) -> object:
+    """The file's YAML, or None with the reason appended to ``errors``."""
+    try:
+        return yaml.load(path.read_text(encoding="utf-8"), Loader=_UniqueKeyLoader)
+    except yaml.YAMLError as exc:
+        errors.append(f"{path}: not loadable YAML: {str(exc).splitlines()[0]}")
+        return None
+
 
 def _name_ok(name: object) -> bool:
-    return isinstance(name, str) and bool(name) and ".." not in name and bool(_NAME_RE.fullmatch(name))
+    return (
+        isinstance(name, str)
+        and bool(name)
+        and ".." not in name
+        and bool(_NAME_RE.fullmatch(name))
+    )
 
 
 def _check_param_spec(pname: str, spec: object, errors: list[str], where: str) -> None:
@@ -62,19 +122,34 @@ def _check_param_spec(pname: str, spec: object, errors: list[str], where: str) -
         return
     ptype = spec.get("type")
     if ptype not in _PARAM_TYPES:
-        errors.append(f"{where}: param '{pname}' type must be one of {sorted(_PARAM_TYPES)}")
+        errors.append(
+            f"{where}: param '{pname}' type must be one of {sorted(_PARAM_TYPES)}"
+        )
         return
     values = spec.get("values")
     low, high = spec.get("min"), spec.get("max")
     if ptype == "enum":
-        if not isinstance(values, list) or not values or not all(isinstance(v, str) for v in values):
-            errors.append(f"{where}: enum param '{pname}' needs a non-empty list of string values")
+        if (
+            not isinstance(values, list)
+            or not values
+            or not all(isinstance(v, str) for v in values)
+        ):
+            errors.append(
+                f"{where}: enum param '{pname}' needs a non-empty list of string values"
+            )
         if low is not None or high is not None:
             errors.append(f"{where}: enum param '{pname}' may not carry numeric bounds")
     else:
         numeric = (int, float)
-        if not isinstance(low, numeric) or not isinstance(high, numeric) or isinstance(low, bool) or isinstance(high, bool):
-            errors.append(f"{where}: {ptype} param '{pname}' needs BOTH numeric min and max")
+        if (
+            not isinstance(low, numeric)
+            or not isinstance(high, numeric)
+            or isinstance(low, bool)
+            or isinstance(high, bool)
+        ):
+            errors.append(
+                f"{where}: {ptype} param '{pname}' needs BOTH numeric min and max"
+            )
             return
         if low > high:
             errors.append(f"{where}: param '{pname}' bounds are inverted (min > max)")
@@ -85,19 +160,37 @@ def _check_param_spec(pname: str, spec: object, errors: list[str], where: str) -
     default = spec.get("default")
     if default is not None:
         if ptype == "enum" and (not isinstance(values, list) or default not in values):
-            errors.append(f"{where}: param '{pname}' default {default!r} is outside its enum values")
-        if ptype in ("int", "float") and (
+            errors.append(
+                f"{where}: param '{pname}' default {default!r} is outside its enum values"
+            )
+        if ptype == "int" and (
+            isinstance(default, bool) or not isinstance(default, int)
+        ):
+            errors.append(
+                f"{where}: int param '{pname}' default {default!r} must be a whole number"
+            )
+        elif ptype in ("int", "float") and (
             isinstance(default, bool)
             or not isinstance(default, (int, float))
-            or (isinstance(low, (int, float)) and isinstance(high, (int, float)) and not (low <= default <= high))
+            or (
+                isinstance(low, (int, float))
+                and isinstance(high, (int, float))
+                and not (low <= default <= high)
+            )
         ):
-            errors.append(f"{where}: param '{pname}' default {default!r} is outside [{low}, {high}]")
+            errors.append(
+                f"{where}: param '{pname}' default {default!r} is outside [{low}, {high}]"
+            )
 
 
 def _keda_disabled_for(changes: list, cls: object, name: object) -> bool:
     """Whether another change in the same action sets ``keda.enabled: false`` for (cls, name)."""
     for other in changes:
-        if not isinstance(other, dict) or other.get("cls") != cls or other.get("name") != name:
+        if (
+            not isinstance(other, dict)
+            or other.get("cls") != cls
+            or other.get("name") != name
+        ):
             continue
         other_path = other.get("path")
         is_keda_enabled = other_path == "keda.enabled" or (
@@ -123,16 +216,26 @@ def _check_change(
     if not isinstance(path, str) or not path:
         errors.append(f"{w}: 'path' must be a non-empty dot-path")
         path = ""
+    elif any(seg != seg.strip() or not seg for seg in path.split(".")):
+        # The engine splits on "." and writes each piece as a key, so an empty
+        # piece commits a "" key into the values file.
+        errors.append(f"{w}: 'path' {path!r} has an empty or padded segment")
     if "value" not in change:
         errors.append(f"{w}: missing 'value'")
     if cls in _GOVERNANCE_CLASSES:
         errors.append(f"{w}: actions may not change the governance class ('{cls}')")
+    elif isinstance(cls, str) and cls not in _DATA_CLASSES:
+        errors.append(f"{w}: unknown resource class '{cls}'")
     # Mirror of commit_policy.keda_owns_replicas (engine #710): refuse only a
     # helmvars-class replicaCount that doesn't also disable KEDA in this action -
     # a non-helmvars chart's KEDA default and an unplaceable overlay's manifest
     # are unknowable here, so the engine stays authoritative for those.
     is_replica_count = path == "replicaCount" or path.endswith(".replicaCount")
-    if is_replica_count and cls == _HELMVARS_CLASS and not _keda_disabled_for(changes, cls, name):
+    if (
+        is_replica_count
+        and cls == _HELMVARS_CLASS
+        and not _keda_disabled_for(changes, cls, name)
+    ):
         errors.append(
             f"{w}: replicaCount on a helmvars app needs 'keda.enabled: false' "
             "in the same action - KEDA may own the count"
@@ -155,13 +258,20 @@ def _check_change(
                 spec = params[pname] if isinstance(params[pname], dict) else {}
                 if spec.get("type") != "enum":
                     errors.append(f"{w}: 'map' requires an enum param ('{pname}')")
-                elif not isinstance(mapping, dict) or set(mapping) != set(spec.get("values") or []):
-                    errors.append(f"{w}: 'map' must cover exactly the enum values of '{pname}'")
+                elif not isinstance(mapping, dict) or set(mapping) != set(
+                    spec.get("values") or []
+                ):
+                    errors.append(
+                        f"{w}: 'map' must cover exactly the enum values of '{pname}'"
+                    )
 
 
 def _check_action(path: Path, errors: list[str]) -> None:
     where = str(path)
-    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    failed = len(errors)
+    doc = _load(path, errors)
+    if len(errors) > failed:
+        return
     if not isinstance(doc, dict):
         errors.append(f"{where}: not a YAML mapping")
         return
@@ -172,7 +282,9 @@ def _check_action(path: Path, errors: list[str]) -> None:
         errors.append(f"{where}: name '{name}' must match the filename '{path.stem}'")
     ra = doc.get("required_action")
     if ra is not None and (not isinstance(ra, str) or not ra):
-        errors.append(f"{where}: 'required_action' must be a non-empty string when present")
+        errors.append(
+            f"{where}: 'required_action' must be a non-empty string when present"
+        )
     params = doc.get("params") or {}
     if not isinstance(params, dict):
         errors.append(f"{where}: 'params' must be a mapping")
@@ -189,21 +301,28 @@ def _check_action(path: Path, errors: list[str]) -> None:
 
 def _check_policy(path: Path, errors: list[str]) -> None:
     where = str(path)
-    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    failed = len(errors)
+    doc = _load(path, errors)
+    if len(errors) > failed:
+        return
     if not isinstance(doc, dict):
         errors.append(f"{where}: not a YAML mapping")
         return
     if not _name_ok(doc.get("name")):
         errors.append(f"{where}: 'name' must be a safe non-empty name")
     elif doc["name"] != path.stem:
-        errors.append(f"{where}: name '{doc['name']}' must match the filename '{path.stem}'")
+        errors.append(
+            f"{where}: name '{doc['name']}' must match the filename '{path.stem}'"
+        )
     protected = doc.get("protected")
     if not isinstance(protected, list) or not protected:
         errors.append(f"{where}: 'protected' must be a non-empty list")
         return
     for pat in protected:
         if not isinstance(pat, str) or pat.count(":") != 2:
-            errors.append(f"{where}: pattern {pat!r} must be 'cls:name:path' (fnmatch globs)")
+            errors.append(
+                f"{where}: pattern {pat!r} must be 'cls:name:path' (fnmatch globs)"
+            )
 
 
 def main() -> int:
@@ -221,8 +340,12 @@ def main() -> int:
 
     gov = Path(args.root) / "governance"
     errors: list[str] = []
-    action_files = sorted((gov / "actions").glob("*.yaml")) if (gov / "actions").is_dir() else []
-    policy_files = sorted((gov / "policies").glob("*.yaml")) if (gov / "policies").is_dir() else []
+    action_files = (
+        sorted((gov / "actions").glob("*.yaml")) if (gov / "actions").is_dir() else []
+    )
+    policy_files = (
+        sorted((gov / "policies").glob("*.yaml")) if (gov / "policies").is_dir() else []
+    )
 
     # Nothing to validate is a FAILURE, not a pass. An empty result means the
     # tree moved, the path is wrong, or the files never landed -- all of which
@@ -240,9 +363,13 @@ def main() -> int:
     if errors:
         for e in errors:
             print(f"ERROR: {e}")
-        print(f"\n{len(errors)} error(s) across {len(action_files) + len(policy_files)} file(s)")
+        print(
+            f"\n{len(errors)} error(s) across {len(action_files) + len(policy_files)} file(s)"
+        )
         return 1
-    print(f"OK: {len(action_files)} action(s) + {len(policy_files)} policy(ies) validate clean")
+    print(
+        f"OK: {len(action_files)} action(s) + {len(policy_files)} policy(ies) validate clean"
+    )
     return 0
 
 

@@ -9,7 +9,7 @@
 # (supply-chain cooldown) and prefer an LTS line where one exists.
 
 base:
-  dfe-infra: "2.2.0"      # charts, appsets, defaults, deployment machinery.
+  dfe-infra: "2.2.1"      # charts, appsets, defaults, deployment machinery.
   #                         ONE pin selects the WHOLE certified stack: dfe-infra's
   #                         versions.yaml at this tag is the stack manifest (every
   #                         dfe-* app image, operator, data service). See
@@ -22,12 +22,10 @@ base:
 # release the running engine does not carry. A deployment that wants a different
 # schema tree adds config/schemas/ as an overlay, which is additive by design.
 
-# Release channel this environment tracks: alpha | beta | rc | release
-# (the maturity ladder). Reconciled 2026-07-16 with the dfe-infra SSoT ladder --
-# "spike" was dropped (it inverts SemVer prerelease ordering) and "rc" added.
-# A channel resolves to the latest stack of that maturity (versions.yaml
-# current/latest/lts + per-stack maturity). Dev/devex -> alpha or rc;
-# staging -> rc; production/customer -> release.
+# Release channel this environment tracks: alpha | beta | rc | release (the
+# maturity ladder of dfe-infra's versions.yaml). It is a record for operators:
+# no tool resolves it, and base.dfe-infra above is what selects the stack.
+# Dev -> alpha or rc, staging -> rc, production -> release.
 channel: "release"
 
 # Per-component overrides -- move ONE component off the certified set, at your

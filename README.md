@@ -22,9 +22,7 @@ dfe-deploy/                 # RW -- yours, per environment, survives base update
   config/                   # HOT-READ config-as-code (apps + dfe-engine read this)
     sources/                #   source definitions (all-in-one doc, gitcrud `sources` class)
     schemas/                #   this deployment's additive schema overlay
-    transforms/             #   VRL / Vector / WASM transform configs
-    rules/  hunts/  alerts/ #   detection content
-    oidc/                   #   OIDC providers / RBAC assignments
+    rules/  hunts/          #   detection content, read by the hunt runner
 ```
 
 Per-user UI state (saved searches, dashboards, prefs) does **not** live here --
@@ -94,7 +92,7 @@ no Kubernetes manifest.
 | `pins.yaml` | the dfe-infra tag selecting the whole certified stack, the release `channel`, per-component `overrides` |
 | `values/` | one `{service}-{instance}-values.yaml` per APP instance -- file presence enables the app |
 | `infra/` | `common.yaml` plus one `<chart>.yaml` per data or platform chart |
-| `config/` | hot-read config-as-code: `sources/`, `schemas/`, `transforms/`, `rules/`, `hunts/`, `alerts/`, `oidc/` |
+| `config/` | hot-read config-as-code: `sources/`, `schemas/`, `rules/`, `hunts/`. The engine adds `compat-profiles/` and `library/` on first write |
 | `governance/` | five curated dials in `actions/`, protected-var patterns in `policies/` |
 | `tools/validate_governance.py` | the structural validator for `governance/` |
 
@@ -105,13 +103,14 @@ Every directory carries its own README. Read `values/README.md` and
 
 ```bash
 python3 tools/validate_governance.py
+python3 -m unittest discover -s tools
 ```
 
 The whole local gate: schema shape, closed param constraints, reference wiring
 and the guard against an action changing a governance class. How it lies:
 
 - `validate-governance.yaml` filters `paths:` on BOTH `push` and `pull_request`,
-  to `governance/**` and the two `tools/` files. A PR touching only `values/`,
+  to `governance/**` and `tools/**`. A PR touching only `values/`,
   `config/`, `pins.yaml` or a README shows no checks -- did not run, not passed.
 - `release.yaml` carries no path filter and re-runs the gate before tagging, so a
   docs change is checked on merge rather than in review. semantic-release exits 0
@@ -128,7 +127,8 @@ and the guard against an action changing a governance class. How it lies:
 | Omit `deploy:` from an instance file | Name `deploy.service` and `deploy.instance` | The ApplicationSet reads it to name the Application, so the file yields no app and no error (`1874994`) |
 | Expect a Job to apply `config/schemas/` | Treat it as the engine's additive overlay | There is no Job -- the engine applies every object at its own startup. `config/README.md` claimed one until `e3b2ca9` (#4) |
 | Read `OK: 0 action(s)` as a pass | Check the count is non-zero | `--root` once defaulted to `.`, so a run from the wrong directory reported success having checked nothing |
-| Deploy `dfe-receiver` untouched | Set `loadBalancerSourceRanges`, or `config.server.auth.mode` | It ships `exposure.mode: public` with an EMPTY allow-list, and empty means `0.0.0.0/0`. `auth.mode` defaults to `none` (`7cae6f6`) |
+| Expect an untouched `dfe-receiver` to take traffic | Name the senders in `exposure.groups.ingest.allow` in `infra/common.yaml` | On the load balancer door an EMPTY allow list renders no load balancer at all, and a `/0` opens it to everyone. The retired `exposure.public.loadBalancerSourceRanges` fails the render |
+| Set `env:` or `transformFiles` in an instance file | Use `otel.serviceName` and `fileSets.<set>.files` | `env:` is not a key the thin charts read and renders nothing. `transformFiles` fails the render by name |
 
 ### Where this sits
 

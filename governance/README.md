@@ -30,10 +30,11 @@ substitute whole-value only (`{$param: name}` or a per-value `map`), never
 into `cls`/`name`/`path`.
 
 The `changes[].name` entries reference the per-instance values files in
-`../values/` (`{service}-{instance}-values` - see `values/README.md`). If an
-instance file does not exist yet, an invoke creates it - and any
-`*-values.yaml` file IS an Argo application, so point actions only at
-instances this deployment actually runs.
+`../values/` (`{service}-{instance}-values` - see `values/README.md`). Every
+shipped action names the `default` instance. If that instance file does not
+exist, an invoke creates one holding only the dial, with no `deploy:` block,
+which deploys nothing, so the dial reports success and changes nothing. Point
+actions only at instances this deployment actually runs.
 
 An action that switches a component off also switches off the engine's secret
 group for it (`secrets.<group>.enabled`, as `hunts-pause` does), and its

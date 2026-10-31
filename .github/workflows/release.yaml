@@ -49,6 +49,9 @@ jobs:
       - name: Gate -- governance tree
         run: python3 tools/validate_governance.py
 
+      - name: Gate -- validator tests
+        run: python3 -m unittest discover -s tools
+
       - uses: hyperi-io/hyperi-ci/.github/actions/setup-semantic-release@main
 
       - name: Tag + render the changelog
