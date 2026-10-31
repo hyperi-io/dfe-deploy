@@ -104,7 +104,7 @@ instead, which routes ingest through the cluster Gateway on
 left `exposed: true` fails the chart render rather than deploying a port
 nothing reaches. The retired keys `exposure.mode` and
 `exposure.public.loadBalancerSourceRanges` fail the render by name. The
-full model is dfe-infra `docs/INGEST-EDGE.md`.
+full model is dfe-infra `docs/ingest-edge.md`.
 
 ## Files an app reads off disk
 
