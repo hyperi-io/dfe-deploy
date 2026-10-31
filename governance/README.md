@@ -19,7 +19,7 @@ Shipped dials:
 | action | what it does | params |
 |---|---|---|
 | `receiver-surge` | raise the receiver KEDA ceiling for an ingest surge | `level`: 2x / 4x |
-| `receiver-normal` | restore the baseline ceiling | - |
+| `receiver-normal` | return to the tier's own ceiling by removing the override | - |
 | `hunts-pause` | stop the hunt runner (shed ClickHouse load) | - |
 | `hunts-resume` | restart the hunt runner (resumes from checkpoints) | - |
 | `hunts-throttle` | cap concurrent hunt runs | `cap`: 1-32 |
@@ -28,6 +28,8 @@ Params are CONSTRAINED by design - an enum carries its full value list, a
 numeric carries both bounds. There is no free-string param type. Values
 substitute whole-value only (`{$param: name}` or a per-value `map`), never
 into `cls`/`name`/`path`.
+
+A value of `{$unset: true}` removes the key instead of setting it, so the var returns to the layer beneath the overlay. `receiver-normal` uses it to hand the KEDA ceiling back to the tier profile.
 
 The `changes[].name` entries reference the per-instance values files in
 `../values/` (`{service}-{instance}-values` - see `values/README.md`). Every

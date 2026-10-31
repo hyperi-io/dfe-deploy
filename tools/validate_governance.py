@@ -245,6 +245,16 @@ def _check_change(
         v = value.strip()
         if v == "" or v == "latest" or v.endswith(":latest"):
             errors.append(f"{w}: unpinned/floating image ref {value!r}")
+    # Mirror of the engine's unset marker: {"$unset": true} alone removes the path, and a
+    # dict carrying "$unset" with anything else is refused rather than written as a literal.
+    mapped = value.get("map") if isinstance(value, dict) else None
+    for candidate in [value, *(mapped.values() if isinstance(mapped, dict) else [])]:
+        if (
+            isinstance(candidate, dict)
+            and "$unset" in candidate
+            and (len(candidate) != 1 or candidate["$unset"] is not True)
+        ):
+            errors.append(f"{w}: an unset marker is exactly {{'$unset': true}}")
     # Param references: whole-value only, declared, map covers the enum exactly.
     if isinstance(value, dict) and "$param" in value:
         if set(value) - {"$param", "map"}:

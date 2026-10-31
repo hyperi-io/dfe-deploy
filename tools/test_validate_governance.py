@@ -75,6 +75,33 @@ ACTIONS = [
         _action(cls="helmvar"),
         "unknown resource class",
     ),
+    ("an unset marker", _action(value="{$unset: true}"), None),
+    (
+        "an unset marker that is false",
+        _action(value="{$unset: false}"),
+        "unset marker is exactly",
+    ),
+    (
+        "an unset marker with a second key",
+        _action(value="{$unset: true, x: 1}"),
+        "unset marker is exactly",
+    ),
+    (
+        "an unset marker as one branch of a map",
+        _action(
+            value="{$param: lvl, map: {a: {$unset: true}, b: 4}}",
+            params="params:\n  lvl: {type: enum, values: [a, b], default: a}\n",
+        ),
+        None,
+    ),
+    (
+        "a malformed unset marker inside a map",
+        _action(
+            value="{$param: lvl, map: {a: {$unset: 1}, b: 4}}",
+            params="params:\n  lvl: {type: enum, values: [a, b], default: a}\n",
+        ),
+        "unset marker is exactly",
+    ),
     ("an infra overlay, which the engine registers", _action(cls="infravars"), None),
     ("YAML that does not parse", "name: x\nchanges: [\n", "not loadable YAML"),
     (
