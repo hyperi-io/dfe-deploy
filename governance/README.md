@@ -19,7 +19,7 @@ Shipped dials:
 | action | what it does | params |
 |---|---|---|
 | `receiver-surge` | raise the receiver KEDA ceiling for an ingest surge | `level`: 2x / 4x |
-| `receiver-normal` | restore the baseline ceiling | - |
+| `receiver-normal` | return to the tier's own ceiling by removing the override | - |
 | `hunts-pause` | stop the hunt runner (shed ClickHouse load) | - |
 | `hunts-resume` | restart the hunt runner (resumes from checkpoints) | - |
 | `hunts-throttle` | cap concurrent hunt runs | `cap`: 1-32 |
@@ -29,11 +29,14 @@ numeric carries both bounds. There is no free-string param type. Values
 substitute whole-value only (`{$param: name}` or a per-value `map`), never
 into `cls`/`name`/`path`.
 
+A value of `{$unset: true}` removes the key instead of setting it, so the var returns to the layer beneath the overlay. `receiver-normal` uses it to hand the KEDA ceiling back to the tier profile.
+
 The `changes[].name` entries reference the per-instance values files in
-`../values/` (`{service}-{instance}-values` - see `values/README.md`). If an
-instance file does not exist yet, an invoke creates it - and any
-`*-values.yaml` file IS an Argo application, so point actions only at
-instances this deployment actually runs.
+`../values/` (`{service}-{instance}-values` - see `values/README.md`). Every
+shipped action names the `default` instance. If that instance file does not
+exist, an invoke creates one holding only the dial, with no `deploy:` block,
+which deploys nothing, so the dial reports success and changes nothing. Point
+actions only at instances this deployment actually runs.
 
 An action that switches a component off also switches off the engine's secret
 group for it (`secrets.<group>.enabled`, as `hunts-pause` does), and its

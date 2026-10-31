@@ -56,10 +56,17 @@ Argo Application, so a file without it produces nothing at all.
 deploy:
   service: dfe-transform-vrl
   instance: edge
-env:
-  # scalo defaults the OTel service.name to the app name, which leaves two
-  # instances of one app indistinguishable in the otel tables.
-  OTEL_SERVICE_NAME: dfe-transform-vrl-edge
+# An app that runs once per source also needs its own object names, consumer
+# group and OTel service.name. Without them two instances of one app collide on
+# names and are indistinguishable in the otel tables. A stack-wide app such as
+# dfe-receiver carries the deploy block alone.
+fullnameOverride: dfe-transform-vrl-edge
+component: transform-vrl-edge
+otel:
+  serviceName: dfe-transform-vrl-edge
+config:
+  source: {group_id: dfe-transform-vrl-edge, topics: [edge_land]}
+  sink: {topic: edge_load}
 keda:
   minReplicaCount: 1
   maxReplicaCount: 10
@@ -70,47 +77,52 @@ resources:
 
 ## The receiver's ingest door
 
-`dfe-receiver` ships `exposure.mode: public`, so a fresh deploy renders a
-LoadBalancer per protocol family carrying its `exposed` listeners. The
-allow-list is `exposure.public.loadBalancerSourceRanges`, and it ships
-EMPTY, which is `0.0.0.0/0` -- the whole internet, not "unset". The
-receiver's own `server.auth.mode` defaults to `none`, so an untouched
-public deploy accepts unauthenticated posts to `/ingest` from anywhere.
-
-Set one or both in the instance file:
+The ingest door is `exposure.groups.ingest`, a deployment-wide setting
+read by the receiver and the gateway alike, so it lives in
+[`infra/common.yaml`](../infra/README.md), not in the receiver's instance
+file. On `door: loadbalancer` (the cloud default) an EMPTY `allow` renders
+no load balancer at all, so a fresh deploy has no public ingest until the
+senders are named:
 
 ```yaml
+# infra/common.yaml
 exposure:
-  public:
-    loadBalancerSourceRanges:
-      - 203.0.113.0/24
-config:
-  server:
-    auth:
-      mode: bearer
+  groups:
+    ingest:
+      allow:
+        - 203.0.113.0/24
 ```
 
-A deployment with no LoadBalancer provisioner uses `exposure.mode:
-internal` instead, which routes ingest through the cluster Gateway on
-`receiver.{domain}` (`routes.receiver` in envoy-gateway-config -- enable
-both together). That path carries HTTP only, so any other listener left
-`exposed: true` fails the chart render rather than deploying a port
-nothing reaches.
+A `/0` in `allow` is open to every address. The allow list is not
+authentication: a listener no ingest credential lists runs
+`server.auth.mode: none`, and the engine switches it to `bearer` once a
+credential names it.
+
+A deployment with no LoadBalancer provisioner sets `door: gateway`
+instead, which routes ingest through the cluster Gateway on
+`receiver.{domain}`. That path carries HTTP only, so any other listener
+left `exposed: true` fails the chart render rather than deploying a port
+nothing reaches. The retired keys `exposure.mode` and
+`exposure.public.loadBalancerSourceRanges` fail the render by name. The
+full model is dfe-infra `docs/ingest-edge.md`.
 
 ## Files an app reads off disk
 
 Apps that read their own content files - the transforms - carry it inline
-here, as a list of `{name, content}`. The chart renders the list into a
-ConfigMap and mounts it. Content lives in the values rather than as loose
-files in this repo because Helm cannot read a raw file out of an Argo
-`$values` source.
+here, as a list of `{name, content}` under `fileSets.<set>.files`. The
+chart renders the list into a ConfigMap and mounts it. Content lives in
+the values rather than as loose files in this repo because Helm cannot
+read a raw file out of an Argo `$values` source. The old `transformFiles`
+key fails the render.
 
 ```yaml
-transformFiles:
-  - name: 000_parse.vrl
-    content: |
-      . = parse_json!(.message)
-      .ts = to_timestamp!(.timestamp)
+fileSets:
+  transforms:
+    files:
+      - name: 000_parse.vrl
+        content: |
+          . = parse_json!(.message)
+          .ts = to_timestamp!(.timestamp)
 ```
 
 A block scalar keeps the bytes verbatim, so VRL stays exact and a Vector
