@@ -3,11 +3,23 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.10](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.9...v1.0.10) (2026-11-01)
+
+### Bug Fixes
+
+* **governance:** correct validation and release push failures ([#18](https://github.com/hyperi-io/dfe-deploy/issues/18)) ([e3cffa0](https://github.com/hyperi-io/dfe-deploy/commit/e3cffa00960e65b36dd7acaadf357e7f11180342))
+
 ## [1.0.9](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.8...v1.0.9) (2026-10-31)
 
 ### Bug Fixes
 
 * hold the governance validator to the engine loader and return the receiver to its tier's ceiling ([#16](https://github.com/hyperi-io/dfe-deploy/issues/16)) ([738ba45](https://github.com/hyperi-io/dfe-deploy/commit/738ba45e7b9d2692426b627c7842efb2440bdb83))
+
+## [1.0.8](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.7...v1.0.8) (2026-10-11)
+
+### Bug Fixes
+
+* hunts-pause switches the engine's hunt-runner secret group off too ([#10](https://github.com/hyperi-io/dfe-deploy/issues/10)) ([09a4e56](https://github.com/hyperi-io/dfe-deploy/commit/09a4e569adb0840cd2b0296c8fa9962084e26fd2))
 
 ## [1.0.7](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.6...v1.0.7) (2026-10-06)
 
