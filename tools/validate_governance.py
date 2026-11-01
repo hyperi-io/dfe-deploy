@@ -188,21 +188,22 @@ def _check_param_spec(pname: str, spec: object, errors: list[str], where: str) -
 
 
 def _keda_disabled_for(changes: list, cls: object, name: object) -> bool:
-    """Whether another change in the same action sets ``keda.enabled: false`` for (cls, name)."""
+    """Whether the action leaves ``keda.enabled`` false for (cls, name).
+
+    Only the top-level ``keda.enabled`` counts, as in the engine, which reads
+    ``doc["keda"]["enabled"]`` and nothing nested. Changes apply in order, so the
+    last one to touch it decides.
+    """
+    disabled = False
     for other in changes:
         if (
-            not isinstance(other, dict)
-            or other.get("cls") != cls
-            or other.get("name") != name
+            isinstance(other, dict)
+            and other.get("cls") == cls
+            and other.get("name") == name
+            and other.get("path") == "keda.enabled"
         ):
-            continue
-        other_path = other.get("path")
-        is_keda_enabled = other_path == "keda.enabled" or (
-            isinstance(other_path, str) and other_path.endswith(".keda.enabled")
-        )
-        if is_keda_enabled and other.get("value") is False:
-            return True
-    return False
+            disabled = other.get("value") is False
+    return disabled
 
 
 def _floating(ref: object) -> bool:

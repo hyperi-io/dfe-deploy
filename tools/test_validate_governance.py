@@ -159,6 +159,30 @@ ACTIONS = [
         ),
         None,
     ),
+    (
+        "a replicaCount with keda.enabled false in the same action",
+        _KEDA_OFF + "  - " + _CHANGE % ("replicaCount", "2") + "\n",
+        None,
+    ),
+    (
+        "a replicaCount whose only keda switch is a nested one",
+        "name: x\nchanges:\n  - "
+        + _CHANGE % ("unrelated.keda.enabled", "false")
+        + "\n  - "
+        + _CHANGE % ("replicaCount", "2")
+        + "\n",
+        "needs 'keda.enabled: false'",
+    ),
+    (
+        "a replicaCount after keda.enabled is switched back on",
+        _KEDA_OFF
+        + "  - "
+        + _CHANGE % ("keda.enabled", "true")
+        + "\n  - "
+        + _CHANGE % ("replicaCount", "2")
+        + "\n",
+        "needs 'keda.enabled: false'",
+    ),
     ("an infra overlay, which the engine registers", _action(cls="infravars"), None),
     ("YAML that does not parse", "name: x\nchanges: [\n", "not loadable YAML"),
     (
