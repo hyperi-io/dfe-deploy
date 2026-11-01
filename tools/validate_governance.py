@@ -205,6 +205,40 @@ def _keda_disabled_for(changes: list, cls: object, name: object) -> bool:
     return False
 
 
+def _floating(ref: object) -> bool:
+    """Whether ``ref`` is a string naming no tag or the ``latest`` tag."""
+    if not isinstance(ref, str):
+        return False
+    v = ref.strip()
+    return v == "" or v == "latest" or v.endswith(":latest")
+
+
+def _resolved_leaves(path: str, value: object, params: dict):
+    """Every (path, scalar) a change can write, across all values a param can take.
+
+    A ``$param`` reference resolves to each branch of its ``map``, or to each enum
+    value when it has none. A mapping value is walked, so ``image: {tag: latest}``
+    is judged at ``image.tag``.
+    """
+    if isinstance(value, dict) and "$param" in value:
+        mapping = value.get("map")
+        spec = params.get(value.get("$param"))
+        if isinstance(mapping, dict):
+            branches = list(mapping.values())
+        elif isinstance(spec, dict) and isinstance(spec.get("values"), list):
+            branches = spec["values"]
+        else:
+            branches = []
+        for branch in branches:
+            yield from _resolved_leaves(path, branch, params)
+    elif isinstance(value, dict):
+        for key, sub in value.items():
+            if isinstance(key, str) and not key.startswith("$"):
+                yield from _resolved_leaves(f"{path}.{key}" if path else key, sub, params)
+    else:
+        yield path, value
+
+
 def _check_change(
     idx: int, change: object, changes: list, params: dict, errors: list[str], where: str
 ) -> None:
@@ -244,11 +278,9 @@ def _check_change(
             f"{w}: replicaCount on a helmvars app needs 'keda.enabled: false' "
             "in the same action - KEDA may own the count"
         )
-    leaf = path.rsplit(".", 1)[-1]
-    if leaf in {"tag", "image"} and isinstance(value, str):
-        v = value.strip()
-        if v == "" or v == "latest" or v.endswith(":latest"):
-            errors.append(f"{w}: unpinned/floating image ref {value!r}")
+    for ref_path, ref in _resolved_leaves(path, value, params):
+        if ref_path.rsplit(".", 1)[-1] in {"tag", "image"} and _floating(ref):
+            errors.append(f"{w}: unpinned/floating image ref {ref!r} at {ref_path}")
     # Mirror of the engine's unset marker: {"$unset": true} alone removes the path, and a
     # dict carrying "$unset" with anything else is refused rather than written as a literal.
     mapped = value.get("map") if isinstance(value, dict) else None

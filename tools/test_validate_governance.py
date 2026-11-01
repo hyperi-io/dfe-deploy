@@ -127,6 +127,38 @@ ACTIONS = [
         ),
         "outside",
     ),
+    (
+        "a floating tag on one branch of a map",
+        _action(
+            path="image.tag",
+            value="{$param: v, map: {a: 1.2.3, b: latest}}",
+            params="params:\n  v: {type: enum, values: [a, b], default: a}\n",
+        ),
+        "floating image",
+    ),
+    (
+        "an enum param whose value is latest, written straight to a tag",
+        _action(
+            path="image.tag",
+            value="{$param: v}",
+            params="params:\n  v: {type: enum, values: [stable, latest], default: stable}\n",
+        ),
+        "floating image",
+    ),
+    (
+        "a floating tag inside an image mapping",
+        _action(path="image", value="{tag: latest}"),
+        "floating image",
+    ),
+    (
+        "pinned tags on every branch of a map",
+        _action(
+            path="image.tag",
+            value="{$param: v, map: {a: 1.2.3, b: 1.2.4}}",
+            params="params:\n  v: {type: enum, values: [a, b], default: a}\n",
+        ),
+        None,
+    ),
     ("an infra overlay, which the engine registers", _action(cls="infravars"), None),
     ("YAML that does not parse", "name: x\nchanges: [\n", "not loadable YAML"),
     (
