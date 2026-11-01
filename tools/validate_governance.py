@@ -23,6 +23,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import math
 import re
 import sys
 from pathlib import Path
@@ -150,6 +151,9 @@ def _check_param_spec(pname: str, spec: object, errors: list[str], where: str) -
             errors.append(
                 f"{where}: {ptype} param '{pname}' needs BOTH numeric min and max"
             )
+            return
+        if not (math.isfinite(low) and math.isfinite(high)):
+            errors.append(f"{where}: param '{pname}' bounds must be finite numbers")
             return
         if low > high:
             errors.append(f"{where}: param '{pname}' bounds are inverted (min > max)")

@@ -24,6 +24,7 @@ vg = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(vg)
 
 _CHANGE = "{cls: helmvars, name: dfe-engine-default-values, path: %s, value: %s}"
+_KEDA_OFF = "name: x\nchanges:\n  - " + _CHANGE % ("keda.enabled", "false") + "\n"
 
 
 def _action(
@@ -101,6 +102,30 @@ ACTIONS = [
             params="params:\n  lvl: {type: enum, values: [a, b], default: a}\n",
         ),
         "unset marker is exactly",
+    ),
+    (
+        "a float param with a NaN bound",
+        _action(
+            value="{$param: r}",
+            params="params:\n  r: {type: float, min: .nan, max: 1}\n",
+        ),
+        "finite",
+    ),
+    (
+        "an int param with an infinite bound",
+        _action(
+            value="{$param: r}",
+            params="params:\n  r: {type: int, min: 1, max: .inf}\n",
+        ),
+        "finite",
+    ),
+    (
+        "a float param whose default is NaN",
+        _action(
+            value="{$param: r}",
+            params="params:\n  r: {type: float, min: 0, max: 1, default: .nan}\n",
+        ),
+        "outside",
     ),
     ("an infra overlay, which the engine registers", _action(cls="infravars"), None),
     ("YAML that does not parse", "name: x\nchanges: [\n", "not loadable YAML"),
