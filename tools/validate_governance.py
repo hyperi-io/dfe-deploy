@@ -23,6 +23,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import math
 import re
 import sys
 from pathlib import Path
@@ -44,6 +45,9 @@ _GOVERNANCE_CLASSES = {
     "ch_service_roles",
     "gov_settings",
 }
+
+# Mirror of commit_policy._DIGEST_RE.
+_DIGEST_RE = re.compile(r"@sha256:[0-9a-f]{64}$")
 
 _PARAM_TYPES = {"enum", "int", "float"}
 
@@ -151,6 +155,9 @@ def _check_param_spec(pname: str, spec: object, errors: list[str], where: str) -
                 f"{where}: {ptype} param '{pname}' needs BOTH numeric min and max"
             )
             return
+        if not (math.isfinite(low) and math.isfinite(high)):
+            errors.append(f"{where}: param '{pname}' bounds must be finite numbers")
+            return
         if low > high:
             errors.append(f"{where}: param '{pname}' bounds are inverted (min > max)")
         if ptype == "int" and (low != int(low) or high != int(high)):
@@ -184,21 +191,65 @@ def _check_param_spec(pname: str, spec: object, errors: list[str], where: str) -
 
 
 def _keda_disabled_for(changes: list, cls: object, name: object) -> bool:
-    """Whether another change in the same action sets ``keda.enabled: false`` for (cls, name)."""
+    """Whether the action leaves ``keda.enabled`` false for (cls, name).
+
+    Only the top-level ``keda.enabled`` counts, as in the engine, which reads
+    ``doc["keda"]["enabled"]`` and nothing nested. Changes apply in order, so the
+    last one to touch it decides.
+    """
+    disabled = False
     for other in changes:
         if (
-            not isinstance(other, dict)
-            or other.get("cls") != cls
-            or other.get("name") != name
+            isinstance(other, dict)
+            and other.get("cls") == cls
+            and other.get("name") == name
+            and other.get("path") == "keda.enabled"
         ):
-            continue
-        other_path = other.get("path")
-        is_keda_enabled = other_path == "keda.enabled" or (
-            isinstance(other_path, str) and other_path.endswith(".keda.enabled")
-        )
-        if is_keda_enabled and other.get("value") is False:
-            return True
-    return False
+            disabled = other.get("value") is False
+    return disabled
+
+
+def _floating(ref: object) -> bool:
+    """Whether ``ref`` is a string naming no tag or the ``latest`` tag."""
+    if not isinstance(ref, str):
+        return False
+    v = ref.strip()
+    return v == "" or v == "latest" or v.endswith(":latest")
+
+
+def _untagged(ref: str) -> bool:
+    """Whether an image reference pins neither a tag nor a sha256 digest."""
+    if _DIGEST_RE.search(ref):
+        return False
+    # A registry port also carries a colon, so the tag is read off the last segment.
+    last = ref.split("@", 1)[0].rsplit("/", 1)[-1]
+    return not last.partition(":")[2]
+
+
+def _resolved_leaves(path: str, value: object, params: dict):
+    """Every (path, scalar) a change can write, across all values a param can take.
+
+    A ``$param`` reference resolves to each branch of its ``map``, or to each enum
+    value when it has none. A mapping value is walked, so ``image: {tag: latest}``
+    is judged at ``image.tag``.
+    """
+    if isinstance(value, dict) and "$param" in value:
+        mapping = value.get("map")
+        spec = params.get(value.get("$param"))
+        if isinstance(mapping, dict):
+            branches = list(mapping.values())
+        elif isinstance(spec, dict) and isinstance(spec.get("values"), list):
+            branches = spec["values"]
+        else:
+            branches = []
+        for branch in branches:
+            yield from _resolved_leaves(path, branch, params)
+    elif isinstance(value, dict):
+        for key, sub in value.items():
+            if isinstance(key, str) and not key.startswith("$"):
+                yield from _resolved_leaves(f"{path}.{key}" if path else key, sub, params)
+    else:
+        yield path, value
 
 
 def _check_change(
@@ -240,11 +291,14 @@ def _check_change(
             f"{w}: replicaCount on a helmvars app needs 'keda.enabled: false' "
             "in the same action - KEDA may own the count"
         )
-    leaf = path.rsplit(".", 1)[-1]
-    if leaf in {"tag", "image"} and isinstance(value, str):
-        v = value.strip()
-        if v == "" or v == "latest" or v.endswith(":latest"):
-            errors.append(f"{w}: unpinned/floating image ref {value!r}")
+    for ref_path, ref in _resolved_leaves(path, value, params):
+        leaf = ref_path.rsplit(".", 1)[-1]
+        if leaf in {"tag", "image"} and _floating(ref):
+            errors.append(f"{w}: unpinned/floating image ref {ref!r} at {ref_path}")
+        elif leaf == "image" and isinstance(ref, str) and _untagged(ref.strip()):
+            errors.append(
+                f"{w}: unpinned image ref {ref!r} at {ref_path} carries no tag and no @sha256 digest"
+            )
     # Mirror of the engine's unset marker: {"$unset": true} alone removes the path, and a
     # dict carrying "$unset" with anything else is refused rather than written as a literal.
     mapped = value.get("map") if isinstance(value, dict) else None

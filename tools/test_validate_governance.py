@@ -24,6 +24,7 @@ vg = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(vg)
 
 _CHANGE = "{cls: helmvars, name: dfe-engine-default-values, path: %s, value: %s}"
+_KEDA_OFF = "name: x\nchanges:\n  - " + _CHANGE % ("keda.enabled", "false") + "\n"
 
 
 def _action(
@@ -101,6 +102,125 @@ ACTIONS = [
             params="params:\n  lvl: {type: enum, values: [a, b], default: a}\n",
         ),
         "unset marker is exactly",
+    ),
+    (
+        "a float param with a NaN bound",
+        _action(
+            value="{$param: r}",
+            params="params:\n  r: {type: float, min: .nan, max: 1}\n",
+        ),
+        "finite",
+    ),
+    (
+        "an int param with an infinite bound",
+        _action(
+            value="{$param: r}",
+            params="params:\n  r: {type: int, min: 1, max: .inf}\n",
+        ),
+        "finite",
+    ),
+    (
+        "a float param whose default is NaN",
+        _action(
+            value="{$param: r}",
+            params="params:\n  r: {type: float, min: 0, max: 1, default: .nan}\n",
+        ),
+        "outside",
+    ),
+    (
+        "a floating tag on one branch of a map",
+        _action(
+            path="image.tag",
+            value="{$param: v, map: {a: 1.2.3, b: latest}}",
+            params="params:\n  v: {type: enum, values: [a, b], default: a}\n",
+        ),
+        "floating image",
+    ),
+    (
+        "an enum param whose value is latest, written straight to a tag",
+        _action(
+            path="image.tag",
+            value="{$param: v}",
+            params="params:\n  v: {type: enum, values: [stable, latest], default: stable}\n",
+        ),
+        "floating image",
+    ),
+    (
+        "a floating tag inside an image mapping",
+        _action(path="image", value="{tag: latest}"),
+        "floating image",
+    ),
+    (
+        "pinned tags on every branch of a map",
+        _action(
+            path="image.tag",
+            value="{$param: v, map: {a: 1.2.3, b: 1.2.4}}",
+            params="params:\n  v: {type: enum, values: [a, b], default: a}\n",
+        ),
+        None,
+    ),
+    (
+        "a replicaCount with keda.enabled false in the same action",
+        _KEDA_OFF + "  - " + _CHANGE % ("replicaCount", "2") + "\n",
+        None,
+    ),
+    (
+        "a replicaCount whose only keda switch is a nested one",
+        "name: x\nchanges:\n  - "
+        + _CHANGE % ("unrelated.keda.enabled", "false")
+        + "\n  - "
+        + _CHANGE % ("replicaCount", "2")
+        + "\n",
+        "needs 'keda.enabled: false'",
+    ),
+    (
+        "a replicaCount after keda.enabled is switched back on",
+        _KEDA_OFF
+        + "  - "
+        + _CHANGE % ("keda.enabled", "true")
+        + "\n  - "
+        + _CHANGE % ("replicaCount", "2")
+        + "\n",
+        "needs 'keda.enabled: false'",
+    ),
+    (
+        "an image ref with no tag and no digest",
+        _action(path="image", value="ghcr.io/example/app"),
+        "no tag and no @sha256",
+    ),
+    (
+        "an image ref whose only colon is a registry port",
+        _action(path="image", value="registry.example:5000/example/app"),
+        "no tag and no @sha256",
+    ),
+    (
+        "an untagged image ref on one branch of a map",
+        _action(
+            path="image",
+            value="{$param: v, map: {a: 'ghcr.io/example/app:1.2.3', b: ghcr.io/example/app}}",
+            params="params:\n  v: {type: enum, values: [a, b], default: a}\n",
+        ),
+        "no tag and no @sha256",
+    ),
+    (
+        "image refs carrying a tag, a digest, or a registry port and a tag",
+        _action(path="image", value="ghcr.io/example/app:1.2.3"),
+        None,
+    ),
+    (
+        "an image ref pinned by digest",
+        _action(path="image", value="ghcr.io/example/app@sha256:" + "a" * 64),
+        None,
+    ),
+    (
+        "a registry port with a tag",
+        _action(path="image", value="registry.example:5000/example/app:1.2.3"),
+        None,
+    ),
+    (
+        "an image repository with no tag, which is not an image ref",
+        _action(path="image.repository", value="ghcr.io/example/app"),
+        None,
     ),
     ("an infra overlay, which the engine registers", _action(cls="infravars"), None),
     ("YAML that does not parse", "name: x\nchanges: [\n", "not loadable YAML"),

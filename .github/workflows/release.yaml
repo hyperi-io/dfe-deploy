@@ -84,10 +84,13 @@ jobs:
 
       # Untagged, and after the tag exists. [skip ci] stops it retriggering this
       # workflow, which would find nothing to release and run the gate for nothing.
+      # Runs on every push, not only a releasing one: a tag whose changelog commit
+      # never landed gets its entry here on the next run, and a complete changelog
+      # is left untouched.
       - name: Commit the changelog back
-        if: steps.rel.outputs.tag != ''
         run: |
           set -euo pipefail
+          python3 tools/changelog_backfill.py --repo "${{ github.repository }}"
           # --porcelain, not `git diff`: on the first release CHANGELOG.md is a
           # NEW file, which git diff reports as no change.
           if [ -z "$(git status --porcelain -- CHANGELOG.md)" ]; then
@@ -97,5 +100,18 @@ jobs:
           git config user.name "hyperi-ci"
           git config user.email "ci@hyperi.io"
           git add CHANGELOG.md
-          git commit -m "chore(release): ${{ steps.rel.outputs.tag }} [skip ci]"
-          git push origin HEAD:main
+          git commit -m "chore(release): ${{ steps.rel.outputs.tag || 'changelog entries' }} [skip ci]"
+          # The concurrency group serialises releases, not other pushes to main,
+          # so a commit landing meanwhile makes this push non-fast-forward. Only
+          # this job writes CHANGELOG.md, so replaying the commit on the new tip
+          # cannot conflict.
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push rejected (attempt ${attempt}), rebasing onto origin/main"
+            git fetch origin main
+            git rebase origin/main
+          done
+          echo "::error::changelog commit could not be pushed after 5 attempts"
+          exit 1
