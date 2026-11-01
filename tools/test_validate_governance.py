@@ -183,6 +183,45 @@ ACTIONS = [
         + "\n",
         "needs 'keda.enabled: false'",
     ),
+    (
+        "an image ref with no tag and no digest",
+        _action(path="image", value="ghcr.io/example/app"),
+        "no tag and no @sha256",
+    ),
+    (
+        "an image ref whose only colon is a registry port",
+        _action(path="image", value="registry.example:5000/example/app"),
+        "no tag and no @sha256",
+    ),
+    (
+        "an untagged image ref on one branch of a map",
+        _action(
+            path="image",
+            value="{$param: v, map: {a: 'ghcr.io/example/app:1.2.3', b: ghcr.io/example/app}}",
+            params="params:\n  v: {type: enum, values: [a, b], default: a}\n",
+        ),
+        "no tag and no @sha256",
+    ),
+    (
+        "image refs carrying a tag, a digest, or a registry port and a tag",
+        _action(path="image", value="ghcr.io/example/app:1.2.3"),
+        None,
+    ),
+    (
+        "an image ref pinned by digest",
+        _action(path="image", value="ghcr.io/example/app@sha256:" + "a" * 64),
+        None,
+    ),
+    (
+        "a registry port with a tag",
+        _action(path="image", value="registry.example:5000/example/app:1.2.3"),
+        None,
+    ),
+    (
+        "an image repository with no tag, which is not an image ref",
+        _action(path="image.repository", value="ghcr.io/example/app"),
+        None,
+    ),
     ("an infra overlay, which the engine registers", _action(cls="infravars"), None),
     ("YAML that does not parse", "name: x\nchanges: [\n", "not loadable YAML"),
     (

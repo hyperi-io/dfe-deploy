@@ -46,6 +46,9 @@ _GOVERNANCE_CLASSES = {
     "gov_settings",
 }
 
+# Mirror of commit_policy._DIGEST_RE.
+_DIGEST_RE = re.compile(r"@sha256:[0-9a-f]{64}$")
+
 _PARAM_TYPES = {"enum", "int", "float"}
 
 # Mirror of dfe_engine.appmgmt.instances.HELMVARS_CLASS: the one gitcrud class an
@@ -214,6 +217,15 @@ def _floating(ref: object) -> bool:
     return v == "" or v == "latest" or v.endswith(":latest")
 
 
+def _untagged(ref: str) -> bool:
+    """Whether an image reference pins neither a tag nor a sha256 digest."""
+    if _DIGEST_RE.search(ref):
+        return False
+    # A registry port also carries a colon, so the tag is read off the last segment.
+    last = ref.split("@", 1)[0].rsplit("/", 1)[-1]
+    return not last.partition(":")[2]
+
+
 def _resolved_leaves(path: str, value: object, params: dict):
     """Every (path, scalar) a change can write, across all values a param can take.
 
@@ -280,8 +292,13 @@ def _check_change(
             "in the same action - KEDA may own the count"
         )
     for ref_path, ref in _resolved_leaves(path, value, params):
-        if ref_path.rsplit(".", 1)[-1] in {"tag", "image"} and _floating(ref):
+        leaf = ref_path.rsplit(".", 1)[-1]
+        if leaf in {"tag", "image"} and _floating(ref):
             errors.append(f"{w}: unpinned/floating image ref {ref!r} at {ref_path}")
+        elif leaf == "image" and isinstance(ref, str) and _untagged(ref.strip()):
+            errors.append(
+                f"{w}: unpinned image ref {ref!r} at {ref_path} carries no tag and no @sha256 digest"
+            )
     # Mirror of the engine's unset marker: {"$unset": true} alone removes the path, and a
     # dict carrying "$unset" with anything else is refused rather than written as a literal.
     mapped = value.get("map") if isinstance(value, dict) else None
