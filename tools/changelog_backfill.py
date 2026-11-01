@@ -122,6 +122,9 @@ def main() -> int:
     args = parser.parse_args()
 
     path = Path(args.file)
+    if not path.exists():
+        print(f"{path} does not exist yet: semantic-release writes it on the first release")
+        return 0
     old = path.read_text(encoding="utf-8")
     new = backfill(
         old,
