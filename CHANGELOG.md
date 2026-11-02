@@ -3,6 +3,13 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.11](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.10...v1.0.11) (2026-11-02)
+
+### Bug Fixes
+
+* **deps:** update actions/setup-python action to v7 ([#20](https://github.com/hyperi-io/dfe-deploy/issues/20)) ([d7ff517](https://github.com/hyperi-io/dfe-deploy/commit/d7ff517b2238902d5b45f6cc5d60d1e210295e10))
+* **deps:** update dependency python to 3.15 ([#19](https://github.com/hyperi-io/dfe-deploy/issues/19)) ([e59afb2](https://github.com/hyperi-io/dfe-deploy/commit/e59afb24f106a649fc08f7653b3e32b895e7e175))
+
 ## [1.0.10](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.9...v1.0.10) (2026-11-01)
 
 ### Bug Fixes
