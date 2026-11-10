@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.14](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.13...v1.0.14) (2026-11-10)
+
+### Bug Fixes
+
+* **docs:** call the search component dfe-hyperdx ([726876a](https://github.com/hyperi-io/dfe-deploy/commit/726876a4cd668f1132455abe414b4e924430092c))
+
 ## [1.0.13](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.12...v1.0.13) (2026-11-09)
 
 ### Bug Fixes
