@@ -9,7 +9,7 @@
 # (supply-chain cooldown) and prefer an LTS line where one exists.
 
 base:
-  dfe-infra: "2.2.2-rc.1" # charts, appsets, defaults, deployment machinery.
+  dfe-infra: "2.2.2-rc.2" # charts, appsets, defaults, deployment machinery.
   #                         ONE pin selects the WHOLE certified stack: dfe-infra's
   #                         versions.yaml at this tag is the stack manifest (every
   #                         dfe-* app image, operator, data service). See
