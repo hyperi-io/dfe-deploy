@@ -33,7 +33,7 @@ dfe-deploy/                 # RW -- yours, per environment, survives base update
 ```
 
 Per-user UI state (saved searches, dashboards, prefs) does **not** live here --
-it lives in the app databases (HyperDX FerretDB).
+it lives in the app databases (dfe-hyperdx's FerretDB).
 
 ## How a real deployment uses it
 
