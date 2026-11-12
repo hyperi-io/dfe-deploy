@@ -9,7 +9,7 @@
 # (supply-chain cooldown) and prefer an LTS line where one exists.
 
 base:
-  dfe-infra: "2.2.2-rc.6" # charts, appsets, defaults, deployment machinery.
+  dfe-infra: "2.2.2" # charts, appsets, defaults, deployment machinery.
   #                         ONE pin selects the WHOLE certified stack: dfe-infra's
   #                         versions.yaml at this tag is the stack manifest (every
   #                         dfe-* app image, operator, data service). See
@@ -26,7 +26,7 @@ base:
 # maturity ladder of dfe-infra's versions.yaml). It is a record for operators:
 # no tool resolves it, and base.dfe-infra above is what selects the stack.
 # Dev -> alpha or rc, staging -> rc, production -> release.
-channel: "rc"
+channel: "release"
 
 # Per-component overrides -- move ONE component off the certified set, at your
 # own documented risk. Precedence: overrides > the certified manifest; use
