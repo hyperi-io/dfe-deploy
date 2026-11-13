@@ -54,7 +54,6 @@ and the guard against an action changing a governance class. How it lies:
 | Fork this repo | Use the template, or clone at the tag and re-home | A fork of a public repo cannot be private, and base updates arrive by bumping `pins.yaml`, never by merging template history (`9b800f1`) |
 | Omit `deploy:` from an instance file | Name `deploy.service` and `deploy.instance` | The ApplicationSet reads it to name the Application, so the file yields no app and no error (`1874994`) |
 | Expect a Job to apply `config/schemas/` | Treat it as the engine's additive overlay | There is no Job -- the engine applies every object at its own startup. `config/README.md` claimed one until `e3b2ca9` (#4) |
-| Read `OK: 0 action(s)` as a pass | Check the count is non-zero | `--root` once defaulted to `.`, so a run from the wrong directory reported success having checked nothing |
 | Expect an untouched `dfe-receiver` to take traffic | Name the senders in `exposure.groups.ingest.allow` in `infra/common.yaml` | On the load balancer door an EMPTY allow list renders no load balancer at all, and a `/0` opens it to everyone. The retired `exposure.public.loadBalancerSourceRanges` fails the render |
 | Set `env:` or `transformFiles` in an instance file | Use `otel.serviceName` and `fileSets.<set>.files` | `env:` is not a key the thin charts read and renders nothing. `transformFiles` fails the render by name |
 
