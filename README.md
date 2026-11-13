@@ -7,9 +7,9 @@ The template a DFE deployment's own git repo is seeded from.
 ## What it does
 
 - Each deployment takes its own read-write copy of this repo. That copy holds everything local to the deployment, and the base, dfe-infra, is pulled by reference at the tag `pins.yaml` names, never vendored in.
-- `pins.yaml`: one dfe-infra tag selects the whole certified stack, so updating the base is a one-line bump that leaves your files alone.
+- `pins.yaml`: one dfe-infra tag selects the certified stack as the baseline, with the release channel and any per-component overrides beside it. Updating the base is a one-line bump that leaves your files alone.
 - `values/`: one Helm values file per app instance. A file named for the instance and carrying its `deploy` block is what turns the app on.
-- `infra/`: `common.yaml` plus one file per data or platform chart.
+- `infra/`: an optional `common.yaml` plus one optional values file per data or platform chart.
 - `config/`: sources, detection rules and hunts as config-as-code, read hot by the DFE apps and dfe-engine, and `config/schemas/`, the additive schema overlay dfe-engine applies at startup.
 - `governance/`: the dials and protected-variable policies, checked by `tools/validate_governance.py`.
 
