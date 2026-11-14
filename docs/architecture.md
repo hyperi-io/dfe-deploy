@@ -1,6 +1,6 @@
 # dfe-deploy architecture
 
-Why this repo is shaped the way it is, and the rules that are enforced rather
+Why this repo is laid out the way it is, and the rules that are enforced rather
 than written down and hoped for. The per-directory READMEs carry the detail for
 each tree -- this page is the argument and the cross-tree invariants.
 
@@ -23,7 +23,7 @@ auditable, and the deployment has to stay manageable when the engine and the UI
 are both down. That rules out a database as the authority and it rules out the
 API as the only way in.
 
-## The shape that answers it
+## The split that answers it
 
 Split the two kinds of state, and make git the authority for the second.
 

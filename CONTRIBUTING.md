@@ -2,7 +2,7 @@
 
 ## Context
 
-Depth, and the reasoning behind the shape: [docs/architecture.md](docs/architecture.md).
+Depth, and the reasoning behind the layout: [docs/architecture.md](docs/architecture.md).
 
 ### What this is
 
@@ -34,7 +34,7 @@ python3 tools/validate_governance.py
 python3 -m unittest discover -s tools
 ```
 
-The whole local gate: schema shape, closed param constraints, reference wiring
+The whole local gate: the required fields of each action and policy, closed param constraints, reference wiring
 and the guard against an action changing a governance class. How it lies:
 
 - `validate-governance.yaml` filters `paths:` on BOTH `push` and `pull_request`,
