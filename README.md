@@ -35,7 +35,7 @@ Bump the dfe-infra version in `pins.yaml` to update the base. Your `values/` and
 
 ## Documentation
 
-- [docs/architecture.md](docs/architecture.md): the shape of a deployment repo and why.
+- [docs/architecture.md](docs/architecture.md): how a deployment repo is laid out, and why.
 - [values/README.md](values/README.md), [infra/README.md](infra/README.md) and [config/README.md](config/README.md): each directory's own rules, to read before a first edit.
 - dfe-infra [docs/deployment/state-and-repos.md](https://github.com/hyperi-io/dfe-infra/blob/main/docs/deployment/state-and-repos.md) and [docs/deployment/stack-versioning.md](https://github.com/hyperi-io/dfe-infra/blob/main/docs/deployment/stack-versioning.md): the canonical model and the diagrams.
 
