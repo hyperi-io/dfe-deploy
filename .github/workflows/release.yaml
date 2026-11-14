@@ -1,18 +1,5 @@
-# Tag main with a semantic version and render the changelog.
-#
-# dfe-deploy is a template repo of YAML and docs, so the full hyperi-ci pipeline
-# (build, test, container, publish) has nothing to do here. What it does need is
-# the same TAGGING regime as the rest of the estate, because deployments pin this
-# template by tag (dfe-infra versions.yaml `content.dfe-deploy`) and an untagged
-# repo cannot be pinned to.
-#
-# The toolchain and the release config come from hyperi-ci's shared composite, so
-# the bump rules stay identical to every other repo: feat -> minor, fix/perf ->
-# patch, breaking -> major, anything else no release.
-#
-# semantic-release tags HEAD -- the human commit -- and only WRITES CHANGELOG.md.
-# Committing it back afterwards, untagged, is what keeps a tag from ever pointing
-# at machine-authored history.
+# Tag main with a semantic version and render the changelog. Deployments pin
+# this template by tag, and the changelog commit lands untagged after it.
 name: release
 
 on:
@@ -82,11 +69,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "${{ steps.rel.outputs.tag }}" --verify-tag --title "dfe-deploy ${{ steps.rel.outputs.tag }}" --generate-notes
 
-      # Untagged, and after the tag exists. [skip ci] stops it retriggering this
-      # workflow, which would find nothing to release and run the gate for nothing.
-      # Runs on every push, not only a releasing one: a tag whose changelog commit
-      # never landed gets its entry here on the next run, and a complete changelog
-      # is left untouched.
+      # Runs on every push, so a tag whose changelog commit never landed gets it next time.
       - name: Commit the changelog back
         run: |
           set -euo pipefail
