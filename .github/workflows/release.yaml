@@ -1,5 +1,4 @@
-# Tag main with a semantic version and render the changelog. Deployments pin
-# this template by tag, and the changelog commit lands untagged after it.
+# Tags main and renders the changelog (CONTRIBUTING.md "Commands that prove a change").
 name: release
 
 on:
@@ -28,8 +27,7 @@ jobs:
         with:
           python-version: "3.15"
 
-      # Gate before tagging. A tag is permanent, so a broken governance tree must
-      # not get one -- the same content validate-governance.yaml runs on PRs.
+      # A tag is permanent, so the governance gate runs first.
       - name: Install pinned PyYAML
         run: python3 -m pip install --require-hashes -r tools/requirements-validate.txt
 
@@ -47,9 +45,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: semantic-release
 
-      # The tag is the only reliable signal that a release happened:
-      # semantic-release exits 0 either way, and most pushes here are docs or
-      # config changes that earn no bump.
+      # semantic-release exits 0 whether or not it tagged, so the tag is the signal.
       - name: Did it release?
         id: rel
         run: |
@@ -84,10 +80,7 @@ jobs:
           git config user.email "ci@hyperi.io"
           git add CHANGELOG.md
           git commit -m "chore(release): ${{ steps.rel.outputs.tag || 'changelog entries' }} [skip ci]"
-          # The concurrency group serialises releases, not other pushes to main,
-          # so a commit landing meanwhile makes this push non-fast-forward. Only
-          # this job writes CHANGELOG.md, so replaying the commit on the new tip
-          # cannot conflict.
+          # Another push can land meanwhile, so retry on a rebase. A conflicting CHANGELOG.md edit stops the job.
           for attempt in 1 2 3 4 5; do
             if git push origin HEAD:main; then
               exit 0

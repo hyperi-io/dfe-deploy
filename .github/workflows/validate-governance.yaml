@@ -1,6 +1,4 @@
-# Validate the governance/ tree (shipped actions + protected-var policies) on
-# every PR and push. Structural mirror of dfe-engine's rules - a broken dial
-# never merges. Chart-path drift is dfe-infra's chart validation's job.
+# The governance/ gate (CONTRIBUTING.md). A change outside governance/ and tools/ runs no check.
 name: validate-governance
 
 on:
