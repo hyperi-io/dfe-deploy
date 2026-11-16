@@ -36,13 +36,13 @@ Helm applies `-f` files in order and the last wins. Each ApplicationSet stacks d
 | `argocd/values/common.yaml` | dfe-infra | every appset below |
 | `argocd/values/<cloud>.yaml` | dfe-infra | every appset below |
 | `argocd/values/profile-<profile>.yaml` | dfe-infra | every appset below |
-| `argocd/values/apps/...` | dfe-infra | apps: `_common.yaml`, then the app's `values.yaml`, `<cloud>.yaml` and `profile-<profile>.yaml` |
+| `argocd/values/apps/...` | dfe-infra | apps and the edge tunnel: `_common.yaml`, then the app's `values.yaml`, `<cloud>.yaml` and `profile-<profile>.yaml` |
 | `sizing/<profile>.data-charts.values.yaml`, `sizing/<app>.values.yaml` | here | data and platform |
 | `infra/common.yaml` | here | apps, data, platform and edge |
-| `infra/<app>.yaml` | here | data, platform and edge |
-| `values/<svc>-<inst>-values.yaml` | here | apps |
+| `infra/<app>.yaml` | here | data, platform and the edge gateway |
+| `values/<svc>-<inst>-values.yaml` | here | apps, and the edge tunnel for `values/culvert-*-values.yaml` |
 
-The edge appset adds `argocd/values/edge-<flavour>.yaml` after the cloud file. Facts the cluster secret holds, such as the domain and the registry, arrive as Helm parameters and beat every file.
+Both edge ApplicationSets add `argocd/values/edge-<flavour>.yaml` after the cloud file. Facts the cluster secret holds, such as the domain and the registry, arrive as Helm parameters and beat every file.
 
 A profile file is a tier DEFAULT, not a lock, so a deployment can declare `clickhouse.mode: external` in `infra/common.yaml` and beat `profile-scale.yaml`. A fact more than one chart consumes belongs in `infra/common.yaml` once, so the network policy, the ClickHouse chart and the loader cannot disagree about it.
 
