@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.25](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.24...v1.0.25) (2026-11-16)
+
+### Bug Fixes
+
+* **ci:** run the locked semantic-release ([377a7af](https://github.com/hyperi-io/dfe-deploy/commit/377a7af45fc514cc5bf674bcad5f622fff45b79c))
+
 ## [1.0.24](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.23...v1.0.24) (2026-11-15)
 
 ### Bug Fixes
