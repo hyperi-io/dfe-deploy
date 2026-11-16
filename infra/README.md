@@ -2,7 +2,7 @@
 
 `values/` holds one file per APP instance and each of those files becomes an Argo
 application. The substrate and platform charts are not app instances - ClickHouse,
-Kafka, PostgreSQL, FerretDB, the OTel collector, the network policies, the gateway
+Kafka, PostgreSQL, DocumentDB, the OTel collector, the network policies, the gateway
 config. dfe-infra decides they exist; this directory is where a deployment says
 what shape they take.
 
@@ -15,7 +15,7 @@ Two kinds of file, both optional:
   disagree about it.
 - **`<chart>.yaml`** - one chart's own values, read by the platform and data
   appsets only. The name is the dfe-infra chart directory:
-  `clickhouse-cluster.yaml`, `kafka.yaml`, `ferretdb.yaml`,
+  `clickhouse-cluster.yaml`, `kafka.yaml`, `documentdb.yaml`,
   `otel-collector.yaml`, `dfe-schema.yaml`, `kafbat.yaml`, `links.yaml`,
   `network-policies.yaml`, `envoy-gateway-config.yaml`.
 

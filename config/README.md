@@ -19,7 +19,7 @@ overlay adds/extends).
 The engine also creates `compat-profiles/` and `library/` here on first write.
 
 NOT here: per-user saved searches / dashboards / preferences -- those are user
-state in the app databases (HyperDX FerretDB), never git. Transform files are
+state in the app databases (the HyperDX DocumentDB store), never git. Transform files are
 inline in the instance file (`fileSets.transforms.files`, see `values/README.md`).
 Alert destinations live on the engine's config volume, OIDC providers in the
 engine's auth directory, and RBAC accounts, groups and roles under `governance/`.
