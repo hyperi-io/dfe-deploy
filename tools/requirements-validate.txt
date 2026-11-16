@@ -1,6 +1,5 @@
 # Hash-pinned dependency set for tools/validate_governance.py (CI).
-# PyYAML 6.0.3 (released 2025-09-25) - every published artifact hash so
-# --require-hashes resolves on any runner arch.
+# Every published artefact hash, so --require-hashes resolves on any runner arch.
 pyyaml==6.0.3 \
     --hash=sha256:214ed4befebe12df36bcc8bc2b64b396ca31be9304b8f59e25c11cf94a4c033b \
     --hash=sha256:02ea2dfa234451bbb8772601d7b8e426c2bfa197136796224e50e35a78777956 \
