@@ -45,7 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+        run: semantic-release
 
       # The tag is the only reliable signal that a release happened:
       # semantic-release exits 0 either way, and most pushes here are docs or
