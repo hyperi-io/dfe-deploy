@@ -1,11 +1,11 @@
 # The dfe-infra stack this deployment runs. README.md "Configuration" explains each key.
 
 base:
-  dfe-infra: "2.2.2-fix.1" # selects dfe-infra's versions.yaml at this tag
+  dfe-infra: "2.2.3-rc.1" # selects dfe-infra's versions.yaml at this tag
 # No dfe-schemas pin: the wheel rides inside the dfe-engine image.
 
 # alpha | beta | rc | release. A record for operators: no tool resolves it.
-channel: "release"
+channel: "rc"
 
 # overrides: tag@sha256 only, format in README.md. Emit the values to merge with
 #   dfe-infra/scripts/dfe-stack resolve --pins pins.yaml --emit-values -
