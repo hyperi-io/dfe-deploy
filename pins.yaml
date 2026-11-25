@@ -1,7 +1,7 @@
 # The dfe-infra stack this deployment runs. README.md "Configuration" explains each key.
 
 base:
-  dfe-infra: "2.2.4-rc.2" # selects dfe-infra's versions.yaml at this tag
+  dfe-infra: "2.2.4-rc.3" # selects dfe-infra's versions.yaml at this tag
 # No dfe-schemas pin: the wheel rides inside the dfe-engine image.
 
 # alpha | beta | rc | release. A record for operators: no tool resolves it.
