@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.40](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.39...v1.0.40) (2026-11-27)
+
+### Bug Fixes
+
+* **docs:** set the house diagram frontmatter ([b6da388](https://github.com/hyperi-io/dfe-deploy/commit/b6da3881724427d2952d6508e67523595ce41137))
+
 ## [1.0.39](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.38...v1.0.39) (2026-11-27)
 
 ### Bug Fixes
