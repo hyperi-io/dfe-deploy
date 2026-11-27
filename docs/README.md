@@ -31,7 +31,7 @@ flowchart LR
     class people,cluster ext
 ```
 
-*Figure 1. L1 Context -- Deployment repo. Dashed boxes are outside DFE.* Up: top of dfe-deploy.
+*Figure 1. L1 Context -- Deployment repo. Operators, analysts and Cluster are outside DFE.* Up: top of dfe-deploy.
 
 The overlays are `values/`, `infra/` and `sizing/`. dfe-infra's charts render at the revision the cluster secret's `dfe.hyperi.io/target_revision` names, and `pins.yaml` records the stack that revision belongs to. dfe-infra's bootstrap creates the bundled Forgejo repo without this template ([dfe-infra#13](https://github.com/hyperi-io/dfe-infra/issues/13) tracks seeding it from the stack's tag), so the template copy is the path for a repo on GitHub, GitLab or any other forge.
 
