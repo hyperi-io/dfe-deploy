@@ -3,6 +3,12 @@
 Rendered by CI and committed back at the end of a release -- do not edit by
 hand. Release notes also appear on the GitHub Releases page, one per tag.
 
+## [1.0.42](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.41...v1.0.42) (2026-11-27)
+
+### Bug Fixes
+
+* **pins:** pin new deployments to 2.2.4 ([b02a437](https://github.com/hyperi-io/dfe-deploy/commit/b02a437d53cc2a8a111387a9fc2a9a8d09da1386))
+
 ## [1.0.41](https://github.com/hyperi-io/dfe-deploy/compare/v1.0.40...v1.0.41) (2026-11-27)
 
 ### Bug Fixes
